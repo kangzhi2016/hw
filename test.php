@@ -14,11 +14,17 @@ function testLexer($input, $expect) {
     $lexer = new Lexer($input);
     $tokens = [];
 
-    while (($tok = $lexer->nextToken())['type'] != 'eof') {
-        $tokens[] = $tok;
+    try{
+        while (($tok = $lexer->nextToken())['type'] != 'eof') {
+            $tokens[] = $tok;
+        }
+    }catch (Exception $e)
+    {
+        p($e->getMessage());
     }
 
-    p($tokens);
+
+//    p($tokens);
     if ($tokens != $expect) {
         echo "expect token is:";
         p($expect);
@@ -56,21 +62,39 @@ function testParse($input)
 $json = file_get_contents("hello.hw");
 //$json = file_get_contents("str.hw");
 //p($json);
-//$exp_lexer = [
+$exp_lexer = [
 //    ['type' => 'kw', 'literal' => 'let'],
 //    ['type' => 'var', 'literal' => 'aa'],
 //    ['type' => '=', 'literal' => '='],
 //    ['type' => 'str', 'literal' => 'hello world'],
 //    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'var', 'literal' => 'aa']
-//];
+//    ['type' => 'var', 'literal' => 'aa'],
 //
-//testLexer($json, $exp_lexer);
-//
-//print "lexer test pass\n";
+//    ['type' => 'kw', 'literal' => 'let'],
+//    ['type' => 'var', 'literal' => 'bb'],
+//    ['type' => '=', 'literal' => '='],
+//    ['type' => 'str', 'literal' => 'this is var bb'],
+//    ['type' => 'kw', 'literal' => 'echo'],
+//    ['type' => 'var', 'literal' => 'bb']
+
+    ['type' => 'kw', 'literal' => 'let'],
+    ['type' => 'var', 'literal' => 'bb'],
+    ['type' => '=', 'literal' => '='],
+    ['type' => 'num', 'literal' => '1'],
+    ['type' => '+', 'literal' => '+'],
+    ['type' => 'num', 'literal' => '2'],
+    ['type' => '*', 'literal' => '*'],
+    ['type' => 'num', 'literal' => '3'],
+    ['type' => 'kw', 'literal' => 'echo'],
+    ['type' => 'var', 'literal' => 'bb']
+];
+
+testLexer($json, $exp_lexer);
+
+print "lexer test pass\n";
 
 
-testParse($json);
+//testParse($json);
 
 //print "parse test pass\n";
 

@@ -29,13 +29,30 @@ class Lexer
 
         $ord = ord($this->c);
 
-        if ($ord == 61) //=
+        if ($this->c == '=' ||
+            $this->c == '+' ||
+            $this->c == '-' ||
+            $this->c == '*' ||
+            $this->c == '/' ||
+            $this->c == '(' ||
+            $this->c == ')' )
         {
+//            $this->readChar();
+//            return $this->makeToken($this->c, $this->c);
+            $token = $this->makeToken($this->c, $this->c);
             $this->readChar();
-            return $this->makeToken('=', '=');
+            return $token;
+        }
+        elseif ($ord >= 48 && $ord <=57)
+        {
+            $num = $this->matchNum();
+            return $this->makeToken('num', $num);
+//            $token = $this->makeToken('num', $num);
+//            $this->readChar();
+//            return $token;
         }
         elseif ($ord == 95 || //_
-               ($ord >= 48 && $ord <=57) || //0~9
+//               ($ord >= 48 && $ord <=57) || //0~9
                ($ord >= 65 && $ord <=90) || //a~z
                ($ord >= 97 && $ord <=122))  //A~Z
         {
@@ -76,10 +93,25 @@ class Lexer
         return $str;
     }
 
+    private function matchNum(): string
+    {
+        $num = '';
+        $ord = ord($this->c);
+//        while($ord >= 48 && $ord <=57 && ($this->c != '+' || $this->c != '-' || $this->c != '*' || $this->c != '/') &&
+//            ($this->c != "\r"  && $this->c != "\n"  && $this->c != "\r\n" && $this->c != self::EOF) )
+        while($ord >= 48 && $ord <=57)
+        {
+            $num .= $this->c;
+            $this->readChar();
+            $ord = ord($this->c);
+        }
+        return $num;
+    }
+
     private function matchKw(): string
     {
         $str = '';
-        while( $this->c != ' ' && $this->c != '=' && $this->c != self::EOF)
+        while( $this->c != ' ' && $this->c != '=' && $this->c != "\r"  && $this->c != "\n"  && $this->c != "\r\n" && $this->c != self::EOF)
         {
             $str .= $this->c;
             $this->readChar();
