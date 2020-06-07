@@ -1,0 +1,7 @@
+
+func aa()
+{
+    echo "this is func aa"
+}
+
+aa()

@@ -13,6 +13,9 @@ class Parser
     //变量存储表
     private $varTable = array();
 
+    //方法表
+    private $funcTable = array();
+
     //语法树
     private $ast = array();
 
@@ -33,8 +36,14 @@ class Parser
             case 'eof':
                 return $this->ast;
             case 'kw':
-                $this->parseKw();
+                $this->ast['child'][] = $this->parseKw();
                 return array();
+            case 'var':
+                if ($this->curTokenTypeIs('var') && $this->nextTokenTypeIs('('))
+                {
+                    $this->ast['child'][] = $this->parseCall();
+                    return array();
+                }
             default:
                 p($this->curToken);
                 p($this->nextToken);
@@ -48,12 +57,21 @@ class Parser
         if ($this->curTokenLiteral() == 'let')
         {
             $this->nextToken();
-            $this->parseAssign();
+            return $this->parseAssign();
         }
         elseif ($this->curTokenLiteral() == 'echo')
         {
             $this->nextToken();
-            $this->parseEcho();
+            return $this->parseEcho();
+        }
+        elseif ($this->curTokenLiteral() == 'func')
+        {
+            $this->nextToken();
+            return $this->parseFunc();
+        }
+        elseif ($this->curTokenTypeIs('var') && $this->nextTokenTypeIs('('))
+        {
+            return $this->parseCall();
         }
     }
 
@@ -75,14 +93,105 @@ class Parser
         $assignChild[] = $this->makeAst('=', '=');
 
         $assignChild[] = $this->parseGeneralExpr();
-        $this->ast['child'][] = $this->makeAst('assign', $assignChild);
+        return $this->makeAst('assign', $assignChild);
+//        $this->ast['child'][] = $this->makeAst('assign', $assignChild);
 //p(json_encode($this->curToken));
     }
 
     private function parseEcho()
     {
         $echoChild = $this->parseGeneralExpr();
-        $this->ast['child'][] = $this->makeAst('echo', $echoChild);
+        return $this->makeAst('echo', $echoChild);
+//        $this->ast['child'][] = $this->makeAst('echo', $echoChild);
+    }
+
+    private function parseFunc()
+    {
+//        p(json_encode($this->curToken));
+//        exit();
+        if ( ! $this->curTokenTypeIs('var') )
+        {
+            $this->throw_error_info(__FUNCTION__, 'var', json_encode($this->curToken));
+        }
+
+        $funcChild = array();
+
+        $varLiteral = $this->curTokenLiteral();
+        $this->funcTable[] = $varLiteral;
+        $funcChild[] = $this->makeAst('var', $varLiteral);
+
+        $this->nextToken();
+
+        $paraChild = $this->parseParas();
+        $funcChild[] = $this->makeAst('paras', $paraChild);
+
+        $paraStmt = $this->parseStmt();
+//        $funcChild[] = $this->makeAst('stmt', $paraStmt);
+        $funcChild[] = $this->makeAst('stmt', $this->makeAst('top', $paraStmt));
+
+        return $this->makeAst('func', $funcChild);
+    }
+
+    private function parseParas()
+    {
+        if ( ! $this->curTokenTypeIs('(') )
+        {
+            $this->throw_error_info(__FUNCTION__, '(', json_encode($this->curToken));
+        }
+
+        $paraChild = array();
+
+        $this->nextToken(); //(
+
+        while ( !$this->curTokenTypeIs(')') )
+        {
+            $paraChild[] = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
+            $this->nextToken();
+        }
+
+        $this->nextToken(); //)
+
+        return $paraChild;
+    }
+
+    private function parseStmt()
+    {
+        if ( ! $this->curTokenTypeIs('{') )
+        {
+            $this->throw_error_info(__FUNCTION__, '{', json_encode($this->curToken));
+        }
+
+        $stmtChild = array();
+
+        $this->nextToken(); //{
+
+        while ( !$this->curTokenTypeIs('}') )
+        {
+            $stmtChild[] = $this->parseKw();
+//            $this->nextToken();
+        }
+
+        $this->nextToken(); //}
+
+        return $stmtChild;
+    }
+
+    private function parseCall()
+    {
+        $varLiteral = $this->curTokenLiteral();
+
+        if ( !in_array($varLiteral, $this->funcTable) )
+        {
+            $this->throw_error("func {$varLiteral} undefined");
+        }
+
+        $callChild = $this->makeAst('var', $varLiteral);
+
+        $this->nextToken(); //var
+        $this->nextToken(); //(
+        $this->nextToken(); //)
+
+        return $this->makeAst('call', $callChild);
     }
 
     private function parseGeneralExpr()

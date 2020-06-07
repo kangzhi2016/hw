@@ -10,6 +10,12 @@ function p($data = '')
     echo "</pre>";
 }
 
+function pt($data)
+{
+    p($data);
+    exit();
+}
+
 function testLexer($input, $expect) {
     $lexer = new Lexer($input);
     $tokens = [];
@@ -80,10 +86,11 @@ function testParse($input, $expect)
 //p ($json);
 
 
-//$json = file_get_contents("hello.hw");
-//$json = file_get_contents("str.hw");
-$json = file_get_contents("expr.hw");
-//p($json);
+//$json = file_get_contents("hw/hello.hw");
+//$json = file_get_contents("hw/str.hw");
+//$json = file_get_contents("hw/expr.hw");
+$json = file_get_contents("hw/func.hw");
+p($json);
 //$exp_lexer = [
 //    ['type' => 'kw', 'literal' => 'let'],
 //    ['type' => 'var', 'literal' => 'aa'],
@@ -109,6 +116,18 @@ $json = file_get_contents("expr.hw");
 //    ['type' => 'num', 'literal' => '3'],
 //    ['type' => 'kw', 'literal' => 'echo'],
 //    ['type' => 'var', 'literal' => 'aa']
+//
+//    ['type' => 'kw', 'literal' => 'func'],
+//    ['type' => 'var', 'literal' => 'aa'],
+//    ['type' => '(', 'literal' => '('],
+//    ['type' => ')', 'literal' => ')'],
+//    ['type' => '{', 'literal' => '{'],
+//    ['type' => 'kw', 'literal' => 'echo'],
+//    ['type' => 'str', 'literal' => 'this is func aa'],
+//    ['type' => '}', 'literal' => '}'],
+//    ['type' => 'var', 'literal' => 'aa'],
+//    ['type' => '(', 'literal' => '('],
+//    ['type' => ')', 'literal' => ')']
 //];
 //
 //echo json_encode($exp_lexer);
@@ -128,18 +147,29 @@ $json = file_get_contents("expr.hw");
 
 $exp_parse = [
     'kind' => 'root', 'child' => [
-        ['kind' => 'assign', 'child' => [
+//        ['kind' => 'assign', 'child' => [
+//            ['kind' => 'var', 'child' => 'aa'],
+//            ['kind' => '=', 'child' => '='],
+//            ['kind' => 'exp', 'child' => [
+//                'left' => 1,
+//                'op' => '+',
+//                'right' => [
+//                    'left' => 2, 'op' => '*', 'right' => 3
+//                ]
+//            ]],
+//        ]],
+//        ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'aa']],
+
+        ['kind' => 'func', 'child' => [
             ['kind' => 'var', 'child' => 'aa'],
-            ['kind' => '=', 'child' => '='],
-            ['kind' => 'exp', 'child' => [
-                'left' => 1,
-                'op' => '+',
-                'right' => [
-                    'left' => 2, 'op' => '*', 'right' => 3
-                ]
+            ['kind' => 'paras', 'child' => []],
+            ['kind' => 'stmt', 'child' => [
+                'kind' => 'top', 'child' => [
+                    ['kind' => 'echo', 'child' => ['kind' => 'str', 'child' => 'this is func aa']
+                ]],
             ]],
         ]],
-        ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'aa']],
+        ['kind' => 'call', 'child' => ['kind' => 'var', 'child' => 'aa']],
     ]
 ];
 
