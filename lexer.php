@@ -27,46 +27,26 @@ class Lexer
     {
         $this->skipBlank();
 
-        $ord = ord($this->c);
-
-        if ($this->c == '=' ||
-            $this->c == '+' ||
-            $this->c == '-' ||
-            $this->c == '*' ||
-            $this->c == '/' ||
-            $this->c == '(' ||
-            $this->c == ')' )
-        {
-//            $this->readChar();
-//            return $this->makeToken($this->c, $this->c);
+        if ($this->isSymbol()) {
             $token = $this->makeToken($this->c, $this->c);
             $this->readChar();
             return $token;
         }
-        elseif ($ord >= 48 && $ord <=57)
+        elseif ($this->isNumber())
         {
             $num = $this->matchNum();
             return $this->makeToken('num', $num);
-//            $token = $this->makeToken('num', $num);
-//            $this->readChar();
-//            return $token;
         }
-        elseif ($ord == 95 || //_
-//               ($ord >= 48 && $ord <=57) || //0~9
-               ($ord >= 65 && $ord <=90) || //a~z
-               ($ord >= 97 && $ord <=122))  //A~Z
+        elseif ($this->isVarName())
         {
-            $str = $this->matchKw();
-            if ($this->isKw($str))
-            {
+            $str = $this->matchVarName();
+            if ($this->isKw($str)) {
                 return $this->makeToken('kw', $str);
-            }
-            else
-            {
+            } else {
                 return $this->makeToken('var', $str);
             }
         }
-        elseif ($this->c == '"') //"
+        elseif ($this->c == '"')
         {
             $this->readChar();
             $str = $this->matchStr();
@@ -79,14 +59,13 @@ class Lexer
             return $this->makeToken('eof', 'EOF');
         }
 
-        throw new Exception(__FUNCTION__.' error, $this->c='.$this->c);
+        throw new Exception(__FUNCTION__ . ' error, $this->c=' . $this->c);
     }
 
     private function matchStr(): string
     {
         $str = '';
-        while( $this->c != '"' && $this->c != self::EOF)
-        {
+        while ($this->c != '"' && $this->c != self::EOF) {
             $str .= $this->c;
             $this->readChar();
         }
@@ -97,10 +76,7 @@ class Lexer
     {
         $num = '';
         $ord = ord($this->c);
-//        while($ord >= 48 && $ord <=57 && ($this->c != '+' || $this->c != '-' || $this->c != '*' || $this->c != '/') &&
-//            ($this->c != "\r"  && $this->c != "\n"  && $this->c != "\r\n" && $this->c != self::EOF) )
-        while($ord >= 48 && $ord <=57)
-        {
+        while ($ord >= 48 && $ord <= 57) {
             $num .= $this->c;
             $this->readChar();
             $ord = ord($this->c);
@@ -108,14 +84,16 @@ class Lexer
         return $num;
     }
 
-    private function matchKw(): string
+    private function matchVarName($str=''): string
     {
-        $str = '';
-        while( $this->c != ' ' && $this->c != '=' && $this->c != "\r"  && $this->c != "\n"  && $this->c != "\r\n" && $this->c != self::EOF)
+        $str = $str?:'';
+
+        while ($this->isVarName())
         {
             $str .= $this->c;
             $this->readChar();
         }
+
         return $str;
     }
 
@@ -124,17 +102,52 @@ class Lexer
         return in_array($str, $this->KeyWords);
     }
 
+    private function isChar($c='')
+    {
+        $c = $c?:$this->c;
+        $ord = ord($c);
+        //a~z || A~Z
+        return (($ord >= 65 && $ord <= 90) || ($ord >= 97 && $ord <= 122))?true:false;
+    }
 
-    // 期望拿到什么字符
-//    private function expectChar($char)
-//    {
-//        if($this->c != $char)
-//        {
-//            return false;
-//        }
-//
-//        return true;
-//    }
+    private function isNumber($c='')
+    {
+        $c = $c?:$this->c;
+        $ord = ord($c);
+        return ($ord >= 48 && $ord <= 57)?true:false;
+    }
+
+    private function isSymbol($c='')
+    {
+        $c = $c?:$this->c;
+        if ($c == '=' ||
+            $c == '+' ||
+            $c == '-' ||
+            $c == '*' ||
+            $c == '/' ||
+            $c == '(' ||
+            $c == ')')
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function isVarName($c='')
+    {
+        $c = $c?:$this->c;
+        $ord = ord($c);
+        if ( $ord == 95 || //_
+            ($ord >= 48 && $ord <=57) || //0~9
+            ($ord >= 65 && $ord <= 90) || //a~z
+            ($ord >= 97 && $ord <= 122) )  //A~Z
+        {
+            return true;
+        }
+
+        return false;
+    }
 
     private function readChar()
     {
@@ -142,11 +155,6 @@ class Lexer
         $this->c = $this->input[$this->readPos] ?? self::EOF;
         $this->readPos++;
     }
-
-//    private function peekChar(): string
-//    {
-//        return $this->input[$this->pos];
-//    }
 
     private function skipBlank()
     {

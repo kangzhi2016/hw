@@ -1,0 +1,5 @@
+let aa = 1
+echo aa
+let bb = 2
+echo bb
+echo aa+bb

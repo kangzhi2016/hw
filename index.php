@@ -11,9 +11,11 @@ function p($data = '')
     echo "</pre>";
 }
 
-$input = file_get_contents("hello.hw");
+//$input = file_get_contents("hello.hw");
 //$input = file_get_contents("str.hw");
-//$input = file_get_contents("expr.hw");
+$input = file_get_contents("expr.hw");
+p($input);
+
 $lexer = new Lexer($input);
 $parse = new Parser($lexer);
 
@@ -24,12 +26,11 @@ try{
     p($e->getMessage());
 }
 
-
 //p($asts);
-
+//echo(json_encode($asts));
+//exit();
 function compileAst($asts, &$varTable)
 {
-//    p($asts['kind']);
     if ($asts['kind'] == 'root')
     {
         $count_child = count($asts['child']);
@@ -40,8 +41,22 @@ function compileAst($asts, &$varTable)
     }
     elseif ($asts['kind'] == 'assign')
     {
+        if ($asts['child'][0]['kind'] != 'var' || $asts['child'][1]['kind'] != '=')
+        {
+            throw new Exception("assign expression error : ".json_encode($asts));
+        }
+
         $varLiteral = $asts['child'][0]['child'];
-        $varVal = $asts['child'][2]['child'];
+
+        if ($asts['child'][2]['kind'] == 'exp')
+        {
+            $varVal = parseExp($asts['child'][2]['child']);
+        }
+        else
+        {
+            $varVal = $asts['child'][2]['child'];
+        }
+//        p(json_encode($varVal));
         $varTable[$varLiteral] = $varVal;
     }
     elseif ($asts['kind'] == 'echo')
@@ -61,9 +76,64 @@ function compileAst($asts, &$varTable)
         {
             $varVal = $asts['child']['child'];
         }
+        elseif ($asts['child']['kind'] == 'exp')
+        {
+            $varVal = parseExp($asts['child']['child'], $varTable);
+        }
 
 //        echo $varVal;
         p($varVal);
+    }
+    else
+    {
+        echo 'unknown kind';
+        echo(json_encode($asts));
+    }
+}
+
+function parseExp($asts, $varTable=array())
+{
+    $left = $asts['left'];
+    $right = $asts['right'];
+
+    if (is_array($left))
+    {
+        $left = parseExp($left);
+    }
+    elseif (is_string($left))
+    {
+        if (!isset($varTable[$left]))
+        {
+            throw new Exception("var {$left} undefined ");
+        }
+
+        $left = $varTable[$left];
+    }
+
+    if (is_array($right))
+    {
+        $right = parseExp($right);
+    }
+    elseif (is_string($right))
+    {
+        if (!isset($varTable[$right]))
+        {
+            throw new Exception("var {$right} undefined ");
+        }
+
+        $right = $varTable[$right];
+    }
+
+    switch ($asts['op'])
+    {
+        case '+':
+            return $left + $right;
+        case '-':
+            return $left - $right;
+        case '*':
+            return $left * $right;
+        case '/':
+            return $left / $right;
     }
 }
 
