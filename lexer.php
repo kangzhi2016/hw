@@ -60,7 +60,8 @@ class Lexer
             return $this->makeToken('eof', 'EOF');
         }
 
-        throw new Exception(__FUNCTION__ . ' error, $this->c=' . $this->c);
+//        throw new Exception(__FUNCTION__ . ' error, $this->c=' . $this->c);
+        pt(__FUNCTION__ . ' error, $this->c=' . $this->c);
     }
 
     private function matchStr(): string

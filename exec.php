@@ -1,14 +1,11 @@
 <?php
 
-//include "lexer.php";
-//include "parser.php";
-
 class Exec
 {
     private $varTable = array();
     private $funcTable = array();
 
-    function compileAst($asts)
+    function compileAst($asts, $scope='global', $scope_name='')
     {
 //        p($asts);
         if ($asts['kind'] == 'root' || $asts['kind'] == 'top')
@@ -16,41 +13,61 @@ class Exec
             $count_child = count($asts['child']);
             for ($i=0; $i<$count_child; $i++)
             {
-                $this->compileAst($asts['child'][$i]);
+                $this->compileAst($asts['child'][$i], $scope, $scope_name);
             }
         }
         elseif ($asts['kind'] == 'assign')
         {
             if ($asts['child'][0]['kind'] != 'var' || $asts['child'][1]['kind'] != '=')
             {
-                throw new Exception("assign expression error : ".json_encode($asts));
+                pt("assign expression error : ".json_encode($asts));
             }
 
             $varLiteral = $asts['child'][0]['child'];
 
             if ($asts['child'][2]['kind'] == 'exp')
             {
-                $varVal = $this->parseExp($asts['child'][2]['child']);
+                $varVal = $this->evalExp($asts['child'][2]['child']);
             }
             else
             {
                 $varVal = $asts['child'][2]['child'];
             }
-    //        p(json_encode($varVal));
-            $this->varTable[$varLiteral] = $varVal;
+
+            if ($scope == 'global')
+            {
+                $this->varTable[$varLiteral] = $varVal;
+            }
+            elseif ($scope == 'func')
+            {
+                $this->funcTable[$scope_name]['varTable'][$varLiteral] = $varVal;
+            }
+
         }
         elseif ($asts['kind'] == 'echo')
         {
-    //        p($asts);
+//            p($asts);
             if ($asts['child']['kind'] == 'var')
             {
                 $varLiteral = $asts['child']['child'];
-                if (!isset($this->varTable[$varLiteral]))
-                {
-                    throw new Exception("var {$varLiteral} undefined ");
-                }
 
-                $varVal = $this->varTable[$varLiteral];
+                if ($scope == 'global')
+                {
+                    if (!isset($this->varTable[$varLiteral]))
+                    {
+                        pt("var {$varLiteral} undefined ");
+                    }
+
+                    $varVal = $this->varTable[$varLiteral];
+                }
+                elseif ($scope == 'func')
+                {
+                    if (!isset($this->funcTable[$scope_name]['varTable'][$varLiteral]))
+                    {
+                        pt("var {$varLiteral} undefined ");
+                    }
+                    $varVal = $this->funcTable[$scope_name]['varTable'][$varLiteral];
+                }
             }
             elseif ($asts['child']['kind'] == 'str' || $asts['child']['kind'] == 'num')
             {
@@ -58,39 +75,31 @@ class Exec
             }
             elseif ($asts['child']['kind'] == 'exp')
             {
-                $varVal = $this->parseExp($asts['child']['child']);
+                $varVal = $this->evalExp($asts['child']['child']);
             }
 
-    //        echo $varVal;
-            p($varVal);
+            echo $varVal;
+//            p($varVal);
         }
         elseif ($asts['kind'] == 'func')
         {
-    //        ['kind' => 'func', 'child' => [
-    //            ['kind' => 'var', 'child' => 'aa'],
-    //            ['kind' => 'paras', 'child' => []],
-    //            ['kind' => 'stmt', 'child' => [
-    //                ['kind' => 'echo', 'child' => ['kind' => 'str', 'child' => 'this is func aa']],
-    //            ]],
-    //        ]],
-    //        ['kind' => 'call', 'child' => ['kind' => 'var', 'child' => 'aa']],
-
             if ( !isset($asts['child'][0]['kind']) || $asts['child'][0]['kind'] != 'var')
             {
-                throw new Exception("func defined error: ".json_encode($asts));
+                pt("func defined error: ".json_encode($asts));
             }
 
             $funcName = $asts['child'][0]['child'];
             if ( isset($this->funcTable[$funcName]) )
             {
-                throw new Exception("func {$funcName} is already defined ");
+                pt("func {$funcName} is already defined ");
             }
 
-            $this->funcTable[$funcName] = $asts['child'];
+            $this->funcTable[$funcName]['paras'] = $asts['child'][1]['child'];
+            $this->funcTable[$funcName]['stmt'] = $asts['child'][2]['child'];
         }
         elseif ($asts['kind'] == 'call')
         {
-            $this->callFunc($asts['child']['child']);
+            $this->callFunc($asts['child']);
         }
         else
         {
@@ -100,40 +109,45 @@ class Exec
         }
     }
 
-    private function callFunc($funcName)
+    private function callFunc($callChild)
     {
+        $funcName = $callChild[0]['child'];
         if ( !isset($this->funcTable[$funcName]) )
         {
-            throw new Exception("func {$funcName} is undefined ");
+            pt("func {$funcName} is undefined ");
         }
 
         $funcChild = $this->funcTable[$funcName];
+        $callParas = $callChild[1]['child'];
 
-        if ( !empty($funcChild[1]) ) //paras
+        if ( !empty($funcChild['paras']) ) //paras
         {
-
+            foreach ($funcChild['paras'] as $key=>$para)
+            {
+                $this->funcTable[$funcName]['varTable'][$para['child']] = $callParas[$key]['child'];
+            }
         }
-
-        if ( !empty($funcChild[2]) ) //stmt
+//        p($funcChild);
+        if ( !empty($funcChild['stmt']) ) //stmt
         {
-            $this->compileAst($funcChild[2]['child']);
+            $this->compileAst($funcChild['stmt'], 'func', $funcName);
         }
     }
 
-    private function parseExp($asts)
+    private function evalExp($asts)
     {
         $left = $asts['left'];
         $right = $asts['right'];
 
         if (is_array($left))
         {
-            $left = $this->parseExp($left);
+            $left = $this->evalExp($left);
         }
         elseif (is_string($left))
         {
             if (!isset($this->varTable[$left]))
             {
-                throw new Exception("var {$left} undefined ");
+                pt("var {$left} undefined ");
             }
 
             $left = $this->varTable[$left];
@@ -141,13 +155,13 @@ class Exec
 
         if (is_array($right))
         {
-            $right = $this->parseExp($right);
+            $right = $this->evalExp($right);
         }
         elseif (is_string($right))
         {
             if (!isset($this->varTable[$right]))
             {
-                throw new Exception("var {$right} undefined ");
+                pt("var {$right} undefined ");
             }
 
             $right = $this->varTable[$right];

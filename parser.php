@@ -185,11 +185,12 @@ class Parser
             $this->throw_error("func {$varLiteral} undefined");
         }
 
-        $callChild = $this->makeAst('var', $varLiteral);
+        $callChild[] = $this->makeAst('var', $varLiteral);
 
         $this->nextToken(); //var
-        $this->nextToken(); //(
-        $this->nextToken(); //)
+//        $this->nextToken(); //(
+        $callChild[] = $this->makeAst('paras', $this->parseParas());
+//        $this->nextToken(); //)
 
         return $this->makeAst('call', $callChild);
     }
@@ -315,10 +316,12 @@ class Parser
 
     private function throw_error($msg, $func='')
     {
-        throw new Exception($func.' '.$msg);
+//        throw new Exception($func.' '.$msg);
+        pt($func.' '.$msg);
     }
     private function throw_error_info($curFunc, $exceptType, $curType)
     {
-        throw new Exception($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
+//        throw new Exception($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
+        pt($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
     }
 }

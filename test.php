@@ -162,14 +162,21 @@ $exp_parse = [
 
         ['kind' => 'func', 'child' => [
             ['kind' => 'var', 'child' => 'aa'],
-            ['kind' => 'paras', 'child' => []],
+            ['kind' => 'paras', 'child' => [
+                ['kind' => 'var', 'child' => 'bb']
+            ]],
             ['kind' => 'stmt', 'child' => [
                 'kind' => 'top', 'child' => [
-                    ['kind' => 'echo', 'child' => ['kind' => 'str', 'child' => 'this is func aa']
+                    ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'bb']
                 ]],
             ]],
         ]],
-        ['kind' => 'call', 'child' => ['kind' => 'var', 'child' => 'aa']],
+        ['kind' => 'call', 'child' => [
+            ['kind' => 'var', 'child' => 'aa'],
+            ['kind' => 'paras', 'child' => [
+                ['kind' => 'num', 'child' => 1]
+            ]],
+        ]],
     ]
 ];
 

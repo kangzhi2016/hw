@@ -1,7 +1,8 @@
 
-func aa()
+func aa(bb)
 {
-    echo "this is func aa"
+    let bb = 2
+    echo bb
 }
 
-aa()
+aa(1)
