@@ -13,7 +13,10 @@ class Lexer
     private $KeyWords = array(
         'let',
         'echo',
-        'func'
+        'func',
+        'if',
+        'else',
+        'elseif'
     );
 
     const EOF = -1;
@@ -129,6 +132,7 @@ class Lexer
             $c == '/' ||
             $c == '(' ||
             $c == ')' ||
+            $c == ',' ||
             $c == '{' ||
             $c == '}')
         {

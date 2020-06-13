@@ -22,6 +22,7 @@ function testLexer($input, $expect) {
 
     try{
         while (($tok = $lexer->nextToken())['type'] != 'eof') {
+            p($tok);
             $tokens[] = $tok;
         }
     }catch (Exception $e)
@@ -89,7 +90,8 @@ function testParse($input, $expect)
 //$json = file_get_contents("hw/hello.hw");
 //$json = file_get_contents("hw/str.hw");
 //$json = file_get_contents("hw/expr.hw");
-$json = file_get_contents("hw/func.hw");
+//$json = file_get_contents("hw/func.hw");
+$json = file_get_contents("hw/ifelse.hw");
 p($json);
 //$exp_lexer = [
 //    ['type' => 'kw', 'literal' => 'let'],
@@ -128,6 +130,29 @@ p($json);
 //    ['type' => 'var', 'literal' => 'aa'],
 //    ['type' => '(', 'literal' => '('],
 //    ['type' => ')', 'literal' => ')']
+
+//    ['type' => 'kw', 'literal' => 'if'],
+//    ['type' => '(', 'literal' => '('],
+//    ['type' => 'num', 'literal' => '1'],
+//    ['type' => ')', 'literal' => ')'],
+//    ['type' => '{', 'literal' => '{'],
+//    ['type' => 'kw', 'literal' => 'echo'],
+//    ['type' => 'num', 'literal' => '1'],
+//    ['type' => '}', 'literal' => '}'],
+//    ['type' => 'kw', 'literal' => 'elseif'],
+//    ['type' => '(', 'literal' => '('],
+//    ['type' => 'num', 'literal' => '0'],
+//    ['type' => ')', 'literal' => ')'],
+//    ['type' => '{', 'literal' => '{'],
+//    ['type' => 'kw', 'literal' => 'echo'],
+//    ['type' => 'num', 'literal' => '2'],
+//    ['type' => '}', 'literal' => '}'],
+//    ['type' => 'kw', 'literal' => 'else'],
+//    ['type' => '{', 'literal' => '{'],
+//    ['type' => 'kw', 'literal' => 'echo'],
+//    ['type' => 'num', 'literal' => '3'],
+//    ['type' => '}', 'literal' => '}'],
+//
 //];
 //
 //echo json_encode($exp_lexer);
@@ -160,23 +185,52 @@ $exp_parse = [
 //        ]],
 //        ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'aa']],
 
-        ['kind' => 'func', 'child' => [
-            ['kind' => 'var', 'child' => 'aa'],
-            ['kind' => 'paras', 'child' => [
-                ['kind' => 'var', 'child' => 'bb']
+//        ['kind' => 'func', 'child' => [
+//            ['kind' => 'var', 'child' => 'aa'],
+//            ['kind' => 'paras', 'child' => [
+//                ['kind' => 'var', 'child' => 'bb']
+//            ]],
+//            ['kind' => 'stmt', 'child' => [
+//                'kind' => 'top', 'child' => [
+//                    ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'bb']
+//                ]],
+//            ]],
+//        ]],
+//        ['kind' => 'call', 'child' => [
+//            ['kind' => 'var', 'child' => 'aa'],
+//            ['kind' => 'paras', 'child' => [
+//                ['kind' => 'num', 'child' => 1]
+//            ]],
+//        ]],
+
+        ['kind' => 'if', 'child' => [
+            ['kind' => 'cond', 'child' => [
+                'cond1' => [
+                    ['kind' => 'num', 'child' => 1]
+                ],
+                'cond2' => [
+                    ['kind' => 'num', 'child' => 0]
+                ],
+                'cond3' => [],
             ]],
             ['kind' => 'stmt', 'child' => [
-                'kind' => 'top', 'child' => [
-                    ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'bb']
-                ]],
-            ]],
-        ]],
-        ['kind' => 'call', 'child' => [
-            ['kind' => 'var', 'child' => 'aa'],
-            ['kind' => 'paras', 'child' => [
-                ['kind' => 'num', 'child' => 1]
-            ]],
-        ]],
+                'cond1' => [
+                    'kind' => 'top', 'child' => [
+                        ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 1]
+                    ]],
+                ],
+                'cond2' => [
+                    'kind' => 'top', 'child' => [
+                        ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 2]
+                    ]],
+                ],
+                'cond3' => [
+                    'kind' => 'top', 'child' => [
+                        ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 3]
+                    ]],
+                ],
+            ]]
+        ]]
     ]
 ];
 

@@ -73,6 +73,11 @@ class Parser
         {
             return $this->parseCall();
         }
+        elseif ($this->curTokenLiteral() == 'if')
+        {
+            $this->nextToken();
+            return $this->parseIf();
+        }
     }
 
     private function parseAssign()
@@ -193,6 +198,39 @@ class Parser
 //        $this->nextToken(); //)
 
         return $this->makeAst('call', $callChild);
+    }
+
+    private function parseIf()
+    {
+        if ( ! $this->curTokenTypeIs('(') )
+        {
+            $this->throw_error_info(__FUNCTION__, '(', json_encode($this->curToken));
+        }
+
+        $ifChild = array();
+        $condNum = 1;
+
+        $this->nextToken(); //(
+
+        while ( !$this->curTokenTypeIs(')') )
+        {
+            $ifChild[] = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
+            $this->nextToken();
+        }
+
+        $this->nextToken(); //)
+
+
+
+        return $ifChild;
+    }
+
+    private function parseCondition()
+    {
+        if ( ! $this->curTokenTypeIs('(') )
+        {
+            $this->throw_error_info(__FUNCTION__, '(', json_encode($this->curToken));
+        }
     }
 
     private function parseGeneralExpr()
