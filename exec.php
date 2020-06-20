@@ -101,6 +101,10 @@ class Exec
         {
             $this->callFunc($asts['child']);
         }
+        elseif ($asts['kind'] == 'if')
+        {
+            $this->evalIf($asts['child']);
+        }
         else
         {
             echo 'unknown kind';
@@ -178,6 +182,39 @@ class Exec
             case '/':
                 return $left / $right;
         }
+    }
+
+
+    function evalIf($asts)
+    {
+        foreach ($asts['cond'] as $condKey=>$cond)
+        {
+            if ( !$this->evalIfCond($cond) )
+            {
+                continue;
+            }
+
+            $this->compileAst($asts['stmt'][$condKey]);
+        }
+    }
+
+    function evalIfCond($conds)
+    {
+        //else
+        if (empty($conds))
+        {
+            return true;
+        }
+
+        foreach ($conds as $cond)
+        {
+            if ($cond['kind'] == 'num' && (int)$cond['child'] > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     //p($varTable);

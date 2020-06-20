@@ -20,7 +20,9 @@ function pt($data)
 //$input = file_get_contents("hw/hello.hw");
 //$input = file_get_contents("hw/str.hw");
 //$input = file_get_contents("hw/expr.hw");
-$input = file_get_contents("hw/func.hw");
+//$input = file_get_contents("hw/func.hw");
+$file = isset($argv[1])?$argv[1]:"hw/hello.hw";
+$input = file_get_contents($file);
 p($input);
 
 $lexer = new Lexer($input);
