@@ -1,0 +1,15 @@
+
+let aa = 1
+
+if( aa > 0)
+{
+    echo 1
+}
+elseif(0)
+{
+    echo 2
+}
+else
+{
+    echo 3
+}

@@ -16,13 +16,15 @@ function pt($data)
     exit();
 }
 
+//pt($argv);
+
 function testLexer($input, $expect) {
     $lexer = new Lexer($input);
     $tokens = [];
 
     try{
         while (($tok = $lexer->nextToken())['type'] != 'eof') {
-            p($tok);
+//            p($tok);
             $tokens[] = $tok;
         }
     }catch (Exception $e)
@@ -91,9 +93,22 @@ function testParse($input, $expect)
 //$json = file_get_contents("hw/str.hw");
 //$json = file_get_contents("hw/expr.hw");
 //$json = file_get_contents("hw/func.hw");
-$json = file_get_contents("hw/ifelse.hw");
+//$json = file_get_contents("hw/ifelse.hw");
+//$file = isset($argv[1])?$argv[1]:"hw/ifelse.hw";
+
+$file = "hw/hello.hw";
+if (isset($argv[1]) && $argv[1])
+{
+    $file = $argv[1];
+}
+elseif (isset($_GET['f']) && $_GET['f'])
+{
+    $file = $_GET['f'];
+}
+
+$json = file_get_contents($file);
 p($json);
-//$exp_lexer = [
+$exp_lexer = [
 //    ['type' => 'kw', 'literal' => 'let'],
 //    ['type' => 'var', 'literal' => 'aa'],
 //    ['type' => '=', 'literal' => '='],
@@ -108,10 +123,10 @@ p($json);
 //    ['type' => 'kw', 'literal' => 'echo'],
 //    ['type' => 'var', 'literal' => 'bb']
 //
-//    ['type' => 'kw', 'literal' => 'let'],
-//    ['type' => 'var', 'literal' => 'aa'],
-//    ['type' => '=', 'literal' => '='],
-//    ['type' => 'num', 'literal' => '1'],
+    ['type' => 'kw', 'literal' => 'let'],
+    ['type' => 'var', 'literal' => 'aa'],
+    ['type' => '=', 'literal' => '='],
+    ['type' => 'num', 'literal' => '1'],
 //    ['type' => '+', 'literal' => '+'],
 //    ['type' => 'num', 'literal' => '2'],
 //    ['type' => '*', 'literal' => '*'],
@@ -131,34 +146,36 @@ p($json);
 //    ['type' => '(', 'literal' => '('],
 //    ['type' => ')', 'literal' => ')']
 
-//    ['type' => 'kw', 'literal' => 'if'],
-//    ['type' => '(', 'literal' => '('],
-//    ['type' => 'num', 'literal' => '1'],
-//    ['type' => ')', 'literal' => ')'],
-//    ['type' => '{', 'literal' => '{'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'num', 'literal' => '1'],
-//    ['type' => '}', 'literal' => '}'],
-//    ['type' => 'kw', 'literal' => 'elseif'],
-//    ['type' => '(', 'literal' => '('],
-//    ['type' => 'num', 'literal' => '0'],
-//    ['type' => ')', 'literal' => ')'],
-//    ['type' => '{', 'literal' => '{'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'num', 'literal' => '2'],
-//    ['type' => '}', 'literal' => '}'],
-//    ['type' => 'kw', 'literal' => 'else'],
-//    ['type' => '{', 'literal' => '{'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'num', 'literal' => '3'],
-//    ['type' => '}', 'literal' => '}'],
-//
-//];
-//
-//echo json_encode($exp_lexer);
-//testLexer($json, $exp_lexer);
-//print "lexer test pass\n";
+    ['type' => 'kw', 'literal' => 'if'],
+    ['type' => '(', 'literal' => '('],
+    ['type' => 'var', 'literal' => 'aa'],
+    ['type' => '=', 'literal' => '='],
+    ['type' => 'num', 'literal' => '1'],
+    ['type' => ')', 'literal' => ')'],
+    ['type' => '{', 'literal' => '{'],
+    ['type' => 'kw', 'literal' => 'echo'],
+    ['type' => 'num', 'literal' => '1'],
+    ['type' => '}', 'literal' => '}'],
+    ['type' => 'kw', 'literal' => 'elseif'],
+    ['type' => '(', 'literal' => '('],
+    ['type' => 'num', 'literal' => '0'],
+    ['type' => ')', 'literal' => ')'],
+    ['type' => '{', 'literal' => '{'],
+    ['type' => 'kw', 'literal' => 'echo'],
+    ['type' => 'num', 'literal' => '2'],
+    ['type' => '}', 'literal' => '}'],
+    ['type' => 'kw', 'literal' => 'else'],
+    ['type' => '{', 'literal' => '{'],
+    ['type' => 'kw', 'literal' => 'echo'],
+    ['type' => 'num', 'literal' => '3'],
+    ['type' => '}', 'literal' => '}'],
 
+];
+
+//echo json_encode($exp_lexer);
+testLexer($json, $exp_lexer);
+print "lexer test pass\n";
+//exit();
 //$exp_parse = [
 //    'kind' => 'root', 'child' => [
 //        ['kind' => 'assign', 'child' => [
@@ -203,33 +220,40 @@ $exp_parse = [
 //            ]],
 //        ]],
 
+        ['kind' => 'assign', 'child' => [
+            ['kind' => 'var', 'child' => 'aa'],
+            ['kind' => '=', 'child' => '='],
+            ['kind' => 'num', 'child' => 1],
+        ]],
         ['kind' => 'if', 'child' => [
-            ['kind' => 'cond', 'child' => [
+            'cond' => [
                 'cond1' => [
-                    ['kind' => 'num', 'child' => 1]
+                    ['kind' => 'var', 'child' => 'aa'],
+                    ['kind' => '>', 'child' => '>'],
+                    ['kind' => 'num', 'child' => 0],
                 ],
                 'cond2' => [
                     ['kind' => 'num', 'child' => 0]
                 ],
                 'cond3' => [],
-            ]],
-            ['kind' => 'stmt', 'child' => [
+            ],
+            'stmt' => [
                 'cond1' => [
                     'kind' => 'top', 'child' => [
                         ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 1]
-                    ]],
+                    ]]
                 ],
                 'cond2' => [
                     'kind' => 'top', 'child' => [
                         ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 2]
-                    ]],
+                    ]]
                 ],
                 'cond3' => [
                     'kind' => 'top', 'child' => [
                         ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 3]
-                    ]],
+                    ]]
                 ],
-            ]]
+            ]
         ]]
     ]
 ];

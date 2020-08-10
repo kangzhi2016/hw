@@ -218,16 +218,19 @@ class Parser
             $this->throw_error_info(__FUNCTION__, '(', json_encode($this->curToken));
         }
 
+        p($this->curToken);
         $this->nextToken(); //(
+        p($this->curToken);
 
         while ( !$this->curTokenTypeIs(')') )
         {
+//            p($this->curToken);
             $condChild[] = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
             $this->nextToken();
         }
 
         $this->nextToken(); //)
-
+//p($condChild);
         return $condChild;
     }
 

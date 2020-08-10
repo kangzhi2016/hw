@@ -30,10 +30,12 @@ class Lexer
     public function nextToken(): array
     {
         $this->skipBlank();
-
         if ($this->isSymbol()) {
-            $token = $this->makeToken($this->c, $this->c);
+            $symbol = $this->matchSymbol();
+            p($this->c);
+            $token = $this->makeToken($symbol, $symbol);
             $this->readChar();
+            p($this->c);
             return $token;
         }
         elseif ($this->isNumber())
@@ -102,6 +104,19 @@ class Lexer
         return $str;
     }
 
+    private function matchSymbol(): string
+    {
+        $symbol = '';
+
+        while ($this->isSymbol())
+        {
+            $symbol .= $this->c;
+            $this->readChar();
+        }
+
+        return $symbol;
+    }
+
     private function isKw($str)
     {
         return in_array($str, $this->KeyWords);
@@ -130,11 +145,17 @@ class Lexer
             $c == '-' ||
             $c == '*' ||
             $c == '/' ||
+            $c == '>' ||
+            $c == '<' ||
+            $c == '!' ||
             $c == '(' ||
             $c == ')' ||
             $c == ',' ||
             $c == '{' ||
-            $c == '}')
+            $c == '}' ||
+            $c == '&&' ||
+            $c == '||'
+            )
         {
             return true;
         }
@@ -177,3 +198,4 @@ class Lexer
         return ['type' => $type, 'literal' => $literal];
     }
 }
+
