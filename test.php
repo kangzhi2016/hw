@@ -24,7 +24,6 @@ function testLexer($input, $expect) {
 
     try{
         while (($tok = $lexer->nextToken())['type'] != 'eof') {
-//            p($tok);
             $tokens[] = $tok;
         }
     }catch (Exception $e)
@@ -32,15 +31,7 @@ function testLexer($input, $expect) {
         p($e->getMessage());
     }
 
-
-//    p($tokens);
     if ($tokens != $expect) {
-//        echo "expect token is:";
-//        p($expect);
-//        echo " but given:";
-//        p($tokens);
-//        exit();
-
         echo "expect token is:";
         echo json_encode($expect);
         echo "<br>";
@@ -58,26 +49,18 @@ function testParse($input, $expect)
 
     p('parse...');
     try{
-        while (($tokens = $parse->parse()) == array()) {
-//            p($tokens);
-        }
-
-//        $tokens = $parse->parse();
+        while (($tokens = $parse->parse()) == array()) {}
     }catch (Exception $e)
     {
         p($e->getMessage());
     }
 
-//    p('parse over');
-//    p($tokens);
     if ($expect && $tokens != $expect)
     {
         echo "expect token is:";
-//        p($expect);
         echo json_encode($expect);
         echo "<br>";
         echo "givens token is:";
-//        p($tokens);
         echo json_encode($tokens);
         exit();
     }
@@ -96,7 +79,7 @@ function testParse($input, $expect)
 //$json = file_get_contents("hw/ifelse.hw");
 //$file = isset($argv[1])?$argv[1]:"hw/ifelse.hw";
 
-$file = "hw/hello.hw";
+$file = "sql/test.sql";
 if (isset($argv[1]) && $argv[1])
 {
     $file = $argv[1];
@@ -107,154 +90,205 @@ elseif (isset($_GET['f']) && $_GET['f'])
 }
 
 $json = file_get_contents($file);
-p($json);
+//p($json);
 $exp_lexer = [
-//    ['type' => 'kw', 'literal' => 'let'],
-//    ['type' => 'var', 'literal' => 'aa'],
-//    ['type' => '=', 'literal' => '='],
-//    ['type' => 'str', 'literal' => 'hello world'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'var', 'literal' => 'aa'],
-//
-//    ['type' => 'kw', 'literal' => 'let'],
-//    ['type' => 'var', 'literal' => 'bb'],
-//    ['type' => '=', 'literal' => '='],
-//    ['type' => 'str', 'literal' => 'this is var bb'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'var', 'literal' => 'bb']
-//
-    ['type' => 'kw', 'literal' => 'let'],
-    ['type' => 'var', 'literal' => 'aa'],
-    ['type' => '=', 'literal' => '='],
-    ['type' => 'num', 'literal' => '1'],
-//    ['type' => '+', 'literal' => '+'],
-//    ['type' => 'num', 'literal' => '2'],
-//    ['type' => '*', 'literal' => '*'],
-//    ['type' => 'num', 'literal' => '3'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'var', 'literal' => 'aa']
-//
-//    ['type' => 'kw', 'literal' => 'func'],
-//    ['type' => 'var', 'literal' => 'aa'],
-//    ['type' => '(', 'literal' => '('],
-//    ['type' => ')', 'literal' => ')'],
-//    ['type' => '{', 'literal' => '{'],
-//    ['type' => 'kw', 'literal' => 'echo'],
-//    ['type' => 'str', 'literal' => 'this is func aa'],
-//    ['type' => '}', 'literal' => '}'],
-//    ['type' => 'var', 'literal' => 'aa'],
-//    ['type' => '(', 'literal' => '('],
-//    ['type' => ')', 'literal' => ')']
+    //select valid_etime,id from t
+    ['type' => 'kw', 'literal' => 'select'],
+    ['type' => 'var', 'literal' => 'valid_etime'],
+    ['type' => ',', 'literal' => ','],
+    ['type' => 'var', 'literal' => 'id'],
+    ['type' => 'kw', 'literal' => 'from'],
+    ['type' => 'var', 'literal' => 't'],
 
-    ['type' => 'kw', 'literal' => 'if'],
+    //where
+    ['type' => 'kw', 'literal' => 'where'],
+    //id > 10
+    ['type' => 'var', 'literal' => 'id'],
+    ['type' => '>', 'literal' => '>'],
+    ['type' => 'num', 'literal' => '10'],
+    //or (price+2 = 100 or prize-2 = 50)
+    ['type' => 'kw', 'literal' => 'or'],
     ['type' => '(', 'literal' => '('],
-    ['type' => 'var', 'literal' => 'aa'],
-    ['type' => '=', 'literal' => '='],
-    ['type' => 'num', 'literal' => '1'],
-    ['type' => ')', 'literal' => ')'],
-    ['type' => '{', 'literal' => '{'],
-    ['type' => 'kw', 'literal' => 'echo'],
-    ['type' => 'num', 'literal' => '1'],
-    ['type' => '}', 'literal' => '}'],
-    ['type' => 'kw', 'literal' => 'elseif'],
-    ['type' => '(', 'literal' => '('],
-    ['type' => 'num', 'literal' => '0'],
-    ['type' => ')', 'literal' => ')'],
-    ['type' => '{', 'literal' => '{'],
-    ['type' => 'kw', 'literal' => 'echo'],
+    ['type' => 'var', 'literal' => 'price'],
+    ['type' => '+', 'literal' => '+'],
     ['type' => 'num', 'literal' => '2'],
-    ['type' => '}', 'literal' => '}'],
-    ['type' => 'kw', 'literal' => 'else'],
-    ['type' => '{', 'literal' => '{'],
-    ['type' => 'kw', 'literal' => 'echo'],
+    ['type' => '=', 'literal' => '='],
+    ['type' => 'num', 'literal' => '100'],
+    ['type' => 'kw', 'literal' => 'or'],
+    ['type' => 'var', 'literal' => 'price'],
+    ['type' => '-', 'literal' => '-'],
+    ['type' => 'num', 'literal' => '2'],
+    ['type' => '=', 'literal' => '='],
+    ['type' => 'num', 'literal' => '50'],
+    ['type' => ')', 'literal' => ')'],
+    //and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
+    ['type' => 'kw', 'literal' => 'and'],
+    ['type' => '(', 'literal' => '('],
+    ['type' => 'var', 'literal' => 'valid_etime'],
+    ['type' => '*', 'literal' => '*'],
     ['type' => 'num', 'literal' => '3'],
-    ['type' => '}', 'literal' => '}'],
+    ['type' => '<', 'literal' => '<'],
+    ['type' => 'str', 'literal' => '2020-10-01'],
+    ['type' => 'kw', 'literal' => 'or'],
+    ['type' => 'var', 'literal' => 'valid_etime'],
+    ['type' => '/', 'literal' => '/'],
+    ['type' => 'num', 'literal' => '2'],
+    ['type' => '>', 'literal' => '>'],
+    ['type' => 'str', 'literal' => '2020-10-01'],
+    ['type' => 'kw', 'literal' => 'or'],
+    ['type' => 'var', 'literal' => 'id'],
+    ['type' => '=', 'literal' => '='],
+    ['type' => 'num', 'literal' => '10'],
+    ['type' => 'kw', 'literal' => 'and'],
+    ['type' => 'var', 'literal' => 'price'],
+    ['type' => '<', 'literal' => '<'],
+    ['type' => 'num', 'literal' => '10'],
+    ['type' => ')', 'literal' => ')'],
+    //order by
+    //id,price desc
+    ['type' => 'kw', 'literal' => 'order'],
+    ['type' => 'kw', 'literal' => 'by'],
+    ['type' => 'var', 'literal' => 'id'],
+    ['type' => ',', 'literal' => ','],
+    ['type' => 'var', 'literal' => 'price'],
+    ['type' => 'kw', 'literal' => 'desc'],
+    //limit
+    //0,10
+    ['type' => 'kw', 'literal' => 'limit'],
+    ['type' => 'num', 'literal' => '0'],
+    ['type' => ',', 'literal' => ','],
+    ['type' => 'num', 'literal' => '10'],
 
 ];
 
 //echo json_encode($exp_lexer);
-testLexer($json, $exp_lexer);
-print "lexer test pass\n";
-//exit();
-//$exp_parse = [
-//    'kind' => 'root', 'child' => [
-//        ['kind' => 'assign', 'child' => [
-//            ['kind' => 'var', 'child' => 'aa'],
-//            ['kind' => '=', 'child' => '='],
-//            ['kind' => 'str', 'child' => 'hello world'],
-//        ]],
-//        ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'aa']],
-//    ]
-//];
+//testLexer($json, $exp_lexer);
+//print "lexer test pass\n";
+
+
 
 $exp_parse = [
     'kind' => 'root', 'child' => [
-//        ['kind' => 'assign', 'child' => [
-//            ['kind' => 'var', 'child' => 'aa'],
+        //select valid_etime,id
+        ['kind' => 'select', 'child' => [
+            ['kind' => 'var', 'child' => 'valid_etime'],
+            ['kind' => 'var', 'child' => 'id'],
 //            ['kind' => '=', 'child' => '='],
-//            ['kind' => 'exp', 'child' => [
-//                'left' => 1,
-//                'op' => '+',
-//                'right' => [
-//                    'left' => 2, 'op' => '*', 'right' => 3
-//                ]
-//            ]],
-//        ]],
-//        ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'aa']],
-
-//        ['kind' => 'func', 'child' => [
-//            ['kind' => 'var', 'child' => 'aa'],
-//            ['kind' => 'paras', 'child' => [
-//                ['kind' => 'var', 'child' => 'bb']
-//            ]],
-//            ['kind' => 'stmt', 'child' => [
-//                'kind' => 'top', 'child' => [
-//                    ['kind' => 'echo', 'child' => ['kind' => 'var', 'child' => 'bb']
-//                ]],
-//            ]],
-//        ]],
-//        ['kind' => 'call', 'child' => [
-//            ['kind' => 'var', 'child' => 'aa'],
-//            ['kind' => 'paras', 'child' => [
-//                ['kind' => 'num', 'child' => 1]
-//            ]],
-//        ]],
-
-        ['kind' => 'assign', 'child' => [
-            ['kind' => 'var', 'child' => 'aa'],
-            ['kind' => '=', 'child' => '='],
-            ['kind' => 'num', 'child' => 1],
+            ['kind' => 'exp', 'child' => [
+                'left' => 1,
+                'op' => '+',
+                'right' => [
+                    'left' => 2, 'op' => '*', 'right' => 3
+                ]
+            ]],
         ]],
-        ['kind' => 'if', 'child' => [
-            'cond' => [
-                'cond1' => [
-                    ['kind' => 'var', 'child' => 'aa'],
-                    ['kind' => '>', 'child' => '>'],
-                    ['kind' => 'num', 'child' => 0],
-                ],
-                'cond2' => [
-                    ['kind' => 'num', 'child' => 0]
-                ],
-                'cond3' => [],
-            ],
-            'stmt' => [
-                'cond1' => [
-                    'kind' => 'top', 'child' => [
-                        ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 1]
+
+        //from t
+        ['kind' => 'from', 'child' => ['kind' => 'var', 'child' => 't']],
+
+        //where
+        //    id > 10
+        //    or (price+2 = 100 or price-2 = 50)
+        //    and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
+        ['kind' => 'where', 'child' => [
+            ['kind' => 'exp', 'child' => [
+                //id > 10
+                'left' => ['kind' => 'exp', 'child' => [
+                    'left' => ['kind' => 'var', 'child' => 'id'],
+                    'op' => '>',
+                    'right' => ['kind' => 'num', 'child' => '10']
+                ]],
+                'op' => 'or',
+                //(price+2 = 100 or price-2 = 50) and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
+                'right' => ['kind' => 'exp', 'child' => [
+                    //price+2 = 100 or price-2 = 50
+                    'left' => ['kind' => 'exp', 'child' => [
+                        //price+2 = 100
+                        'left' => ['kind' => 'exp', 'child' => [
+                            'left' => ['kind' => 'exp', 'child' => [
+                                'left' => ['kind' => 'var', 'child' => 'price'],
+                                'op' => '+',
+                                'right' => ['kind' => 'num', 'child' => '2']
+                            ]],
+                            'op' => '=',
+                            'right' => ['kind' => 'num', 'child' => '10']
+                        ]],
+                        'op' => 'or',
+                        //price-2 = 50
+                        'right' => ['kind' => 'exp', 'child' => [
+                            'left' => ['kind' => 'exp', 'child' => [
+                                'left' => ['kind' => 'var', 'child' => 'price'],
+                                'op' => '-',
+                                'right' => ['kind' => 'num', 'child' => '2']
+                            ]],
+                            'op' => '=',
+                            'right' => ['kind' => 'num', 'child' => '50']
+                        ]]
+                    ]],
+                    'op' => 'and',
+                    //valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10
+                    'right' => ['kind' => 'exp', 'child' => [
+                        //valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01"
+                        'left' => ['kind' => 'exp', 'child' => [
+                            //valid_etime*3 < "2020-10-01"
+                            'left' => ['kind' => 'exp', 'child' => [
+                                //valid_etime*3
+                                'left' => ['kind' => 'exp', 'child' => [
+                                    'left' => ['kind' => 'var', 'child' => 'valid_etime'],
+                                    'op' => '*',
+                                    'right' => ['kind' => 'num', 'child' => '3']
+                                ]],
+                                'op' => '<',
+                                'right' => ['kind' => 'str', 'child' => '2020-10-01']
+                            ]],
+                            'op' => 'or',
+                            //valid_etime/2 > "2020-10-01"
+                            'right' => ['kind' => 'exp', 'child' => [
+                                //valid_etime/2
+                                'left' => ['kind' => 'exp', 'child' => [
+                                    'left' => ['kind' => 'var', 'child' => 'valid_etime'],
+                                    'op' => '/',
+                                    'right' => ['kind' => 'num', 'child' => '2']
+                                ]],
+                                'op' => '>',
+                                'right' => ['kind' => 'str', 'child' => '2020-10-01']
+                            ]]
+                        ]],
+                        'op' => 'or',
+                        //id = 10 and price < 10
+                        'right' => ['kind' => 'exp', 'child' => [
+                            'left' => ['kind' => 'exp', 'child' => [
+                                'left' => ['kind' => 'var', 'child' => 'id'],
+                                'op' => '=',
+                                'right' => ['kind' => 'num', 'child' => '10']
+                            ]],
+                            'op' => 'and',
+                            'right' => ['kind' => 'exp', 'child' => [
+                                'left' => ['kind' => 'var', 'child' => 'price'],
+                                'op' => '>',
+                                'right' => ['kind' => 'num', 'child' => '10']
+                            ]]
+                        ]]
                     ]]
-                ],
-                'cond2' => [
-                    'kind' => 'top', 'child' => [
-                        ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 2]
-                    ]]
-                ],
-                'cond3' => [
-                    'kind' => 'top', 'child' => [
-                        ['kind' => 'echo', 'child' => ['kind' => 'num', 'child' => 3]
-                    ]]
-                ],
-            ]
-        ]]
+                ]],
+            ]],
+        ]],
+
+        //order by id,price desc
+        ['kind' => 'order_by', 'child' => [
+            ['kind' => 'fields', 'child' => [
+                ['kind' => 'str', 'child' => 'id'],
+                ['kind' => 'str', 'child' => 'price']
+            ]],
+            ['kind' => 'type', 'child' => 'desc'],
+        ]],
+
+        //limit 0,10
+        ['kind' => 'limit', 'child' => [
+            ['kind' => 'row', 'child' => '0'],
+            ['kind' => 'offset', 'child' => '10'],
+        ]],
+
     ]
 ];
 
@@ -262,4 +296,3 @@ $exp_parse = [
 
 testParse($json, $exp_parse);
 print "parse test pass\n";
-

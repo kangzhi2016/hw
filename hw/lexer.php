@@ -6,48 +6,36 @@ class Lexer
 
     private $pos = 0;  // point to c char
 
-    private $char; // current char
+    private $readPos = 0; // point to next char
 
-    const EOF = -1;
+    private $c; // current char
 
     private $KeyWords = array(
-        'select',
-        'SELECT',
-        'from',
-        'FROM',
-        'where',
-        'WHERE',
-        'or',
-        'OR',
-        'and',
-        'AND',
-        'order',
-        'ORDER',
-        'by',
-        'BY',
-        'asc',
-        'ASC',
-        'desc',
-        'DESC',
-        'limit',
-        'LIMIT'
+        'let',
+        'echo',
+        'func',
+        'if',
+        'else',
+        'elseif'
     );
+
+    const EOF = -1;
 
     public function __construct(string $input)
     {
         $this->input = $input;
-        $this->char = $this->input[$this->pos];
+        $this->readChar();
     }
 
     public function nextToken(): array
     {
         $this->skipBlank();
-
-        if ($this->isSymbol())
-        {
+        if ($this->isSymbol()) {
             $symbol = $this->matchSymbol();
+            p($this->c);
             $token = $this->makeToken($symbol, $symbol);
-//            $this->readChar();
+            $this->readChar();
+            p($this->c);
             return $token;
         }
         elseif ($this->isNumber())
@@ -64,7 +52,7 @@ class Lexer
                 return $this->makeToken('var', $str);
             }
         }
-        elseif ($this->char == '"' || $this->char == "'" )
+        elseif ($this->c == '"')
         {
             $this->readChar();
             $str = $this->matchStr();
@@ -72,20 +60,20 @@ class Lexer
             $this->readChar();
             return $token;
         }
-        elseif ($this->char == self::EOF)
+        elseif ($this->c == self::EOF)
         {
             return $this->makeToken('eof', 'EOF');
         }
 
-//        throw new Exception(__FUNCTION__ . ' error, $this->char=' . $this->char);
-        pt(__FUNCTION__ . ' error, $this->char=' . $this->char);
+//        throw new Exception(__FUNCTION__ . ' error, $this->c=' . $this->c);
+        pt(__FUNCTION__ . ' error, $this->c=' . $this->c);
     }
 
     private function matchStr(): string
     {
         $str = '';
-        while ($this->char != '"' && $this->char != self::EOF) {
-            $str .= $this->char;
+        while ($this->c != '"' && $this->c != self::EOF) {
+            $str .= $this->c;
             $this->readChar();
         }
         return $str;
@@ -94,11 +82,11 @@ class Lexer
     private function matchNum(): string
     {
         $num = '';
-        $ord = ord($this->char);
+        $ord = ord($this->c);
         while ($ord >= 48 && $ord <= 57) {
-            $num .= $this->char;
+            $num .= $this->c;
             $this->readChar();
-            $ord = ord($this->char);
+            $ord = ord($this->c);
         }
         return $num;
     }
@@ -109,7 +97,7 @@ class Lexer
 
         while ($this->isVarName())
         {
-            $str .= $this->char;
+            $str .= $this->c;
             $this->readChar();
         }
 
@@ -122,7 +110,7 @@ class Lexer
 
         while ($this->isSymbol())
         {
-            $symbol .= $this->char;
+            $symbol .= $this->c;
             $this->readChar();
         }
 
@@ -136,7 +124,7 @@ class Lexer
 
     private function isChar($c='')
     {
-        $c = $c?:$this->char;
+        $c = $c?:$this->c;
         $ord = ord($c);
         //a~z || A~Z
         return (($ord >= 65 && $ord <= 90) || ($ord >= 97 && $ord <= 122))?true:false;
@@ -144,14 +132,14 @@ class Lexer
 
     private function isNumber($c='')
     {
-        $c = $c?:$this->char;
+        $c = $c?:$this->c;
         $ord = ord($c);
         return ($ord >= 48 && $ord <= 57)?true:false;
     }
 
     private function isSymbol($c='')
     {
-        $c = $c?:$this->char;
+        $c = $c?:$this->c;
         if ($c == '=' ||
             $c == '+' ||
             $c == '-' ||
@@ -163,7 +151,10 @@ class Lexer
             $c == '(' ||
             $c == ')' ||
             $c == ',' ||
-            $c == '`'
+            $c == '{' ||
+            $c == '}' ||
+            $c == '&&' ||
+            $c == '||'
             )
         {
             return true;
@@ -174,7 +165,7 @@ class Lexer
 
     private function isVarName($c='')
     {
-        $c = $c?:$this->char;
+        $c = $c?:$this->c;
         $ord = ord($c);
         if ( $ord == 95 || //_
             ($ord >= 48 && $ord <=57) || //0~9
@@ -189,16 +180,14 @@ class Lexer
 
     private function readChar()
     {
-//        $this->pos = $this->readPos;
-//        $this->char = $this->input[$this->readPos] ?? self::EOF;
-//        $this->readPos++;
-
-        $this->char = $this->input[++$this->pos] ?? self::EOF;
+        $this->pos = $this->readPos;
+        $this->c = $this->input[$this->readPos] ?? self::EOF;
+        $this->readPos++;
     }
 
     private function skipBlank()
     {
-        while( $this->char == " " || $this->char == "\t" || $this->char == "\n" || $this->char == "\r" || $this->char == "\r\n" || $this->char == "\n\r")
+        while( $this->c == " " || $this->c == "\t" || $this->c == "\n" || $this->c == "\r" || $this->c == "\r\n" || $this->c == "\n\r")
         {
             $this->readChar();
         }

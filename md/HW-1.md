@@ -315,7 +315,7 @@ private function isVarChar($c='')
 //nextToken()分支
 if ($this->isVarChar()) //是否为变量字符
 {
-    $word = $this->matchWord();
+    $word = $this->matchVariable();
     if ($this->isKw($word))  //是否为关键字
     {
         return $this->makeToken('kw', $word);
@@ -324,6 +324,19 @@ if ($this->isVarChar()) //是否为变量字符
     {   //否则直接返回匹配内容
         return $this->makeToken('var', $word);
     }
+}
+
+//匹配变量名
+private function matchVariable($str=''): string
+{
+    $str = $str?:'';
+    while ($this->isVarChar())
+    {
+        $str .= $this->char;
+        $this->readChar();
+    }
+
+    return $str;
 }
 ```
 再次运行 `test.php` 
@@ -380,4 +393,17 @@ private function matchStr(): string
 再次运行 `test.php` 发现 `lexer test pass ` ，说明我们的词法分析器已经能正常工作，并且成功解析HW源码为我们想要的格式。虽然这部分代码还不完善，但是我们已经学到了词法分析的一种新思路，后面我们要做的就是不断的完善它就可以了。
 
 #### 四、parser语法分析器
+
+1. 语法分析顾名思义，就是分析代码的语法是否有错误。既然是我们自己实现一门编程语言，那么我们就可以规定变量如何定义，如何输出，以及更高级的方法的定义和调用等，这些规定就是语法。前面我们提到了lexer词法分析器，用来将源码生成一个个`token` ，parser词法分析就是分析这些 `token` 的组合是否符合我们的规定。 
+
+   所以parser类的思路就是从lexer中取`token`，然后根据 `token` 的类型，用几个连续的`token`匹配我们规定的语法，如果不满足，说明语法错误，报错即可。
+
+2. 这里我们先不生成语法树，从最基本的、最单纯的分析语法入手，同样，parser也只提供一个公共的方法即可：
+
+   ```
+   
+   ```
+
+   
+
 #### 五、eval
