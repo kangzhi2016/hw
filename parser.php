@@ -13,17 +13,16 @@ class Parser
     //变量存储表
     private $varTable = array();
 
-    //方法表
-    private $funcTable = array();
-
     //语法树
     private $ast = array();
 
     public function __construct(Lexer $lexer)
     {
         $this->lexer = $lexer;
-        $this->nextToken();
-        $this->nextToken();
+//        $this->nextToken();
+//        $this->nextToken();
+        $this->curToken = $this->lexer->nextToken();
+        $this->nextToken = $this->lexer->nextToken();
 
         $this->ast = $this->makeAst('root', array());
     }
@@ -42,10 +41,11 @@ class Parser
 
     private function parseKw()
     {
-        if ($this->curTokenLiteral() == 'let')
+        if ($this->curTokenLiteral() == 'select')
         {
             $this->nextToken();
-            return $this->parseAssign();
+            $this->parseAssign();
+            return $this->parseSelect();
         }
         elseif ($this->curTokenLiteral() == 'echo')
         {
@@ -66,6 +66,27 @@ class Parser
             $this->nextToken();
             return $this->parseIf();
         }
+    }
+
+    private function parseSelect()
+    {
+        if (!$this->curTokenTypeIs('var') && !$this->curTokenTypeIs('*'))
+        {
+            $this->throw_error_info(__FUNCTION__, 'var|*', json_encode($this->curToken));
+        }
+
+        $selectChild = array();
+
+        $varLiteral = $this->curTokenLiteral();
+        $this->varTable[$varLiteral] = '';
+        $selectChild[] = $this->makeAst('var', $varLiteral);
+
+        $this->nextToken();
+        $this->expectCurTokenType('=');
+        $selectChild[] = $this->makeAst('=', '=');
+
+        $selectChild[] = $this->parseGeneralExpr();
+        return $this->makeAst('assign', $selectChild);
     }
 
     private function parseAssign()
@@ -93,30 +114,6 @@ class Parser
     {
         $echoChild = $this->parseGeneralExpr();
         return $this->makeAst('echo', $echoChild);
-    }
-
-    private function parseFunc()
-    {
-        if ( ! $this->curTokenTypeIs('var') )
-        {
-            $this->throw_error_info(__FUNCTION__, 'var', json_encode($this->curToken));
-        }
-
-        $funcChild = array();
-
-        $varLiteral = $this->curTokenLiteral();
-        $this->funcTable[] = $varLiteral;
-        $funcChild[] = $this->makeAst('var', $varLiteral);
-
-        $this->nextToken();
-
-        $paraChild = $this->parseParas();
-        $funcChild[] = $this->makeAst('paras', $paraChild);
-
-        $paraStmt = $this->parseStmt();
-        $funcChild[] = $this->makeAst('stmt', $this->makeAst('top', $paraStmt));
-
-        return $this->makeAst('func', $funcChild);
     }
 
     private function parseParas()
@@ -164,23 +161,6 @@ class Parser
         }
 
         return $stmtChild;
-    }
-
-    private function parseCall()
-    {
-        $varLiteral = $this->curTokenLiteral();
-
-        if ( !in_array($varLiteral, $this->funcTable) )
-        {
-            $this->throw_error("func {$varLiteral} undefined");
-        }
-
-        $callChild[] = $this->makeAst('var', $varLiteral);
-
-        $this->nextToken(); //var
-        $callChild[] = $this->makeAst('paras', $this->parseParas());
-
-        return $this->makeAst('call', $callChild);
     }
 
     private function parseIf($cond=array(), $stmt=array(), $condNum = 1)
@@ -299,7 +279,7 @@ class Parser
 
     private function curTokenLiteral()
     {
-        return $this->curToken['literal'];
+        return strtolower($this->curToken['literal']);
     }
 
     private function curTokenTypeIs($tokenType)

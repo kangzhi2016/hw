@@ -12,25 +12,15 @@ class Lexer
 
     private $KeyWords = array(
         'select',
-        'SELECT',
         'from',
-        'FROM',
         'where',
-        'WHERE',
         'or',
-        'OR',
         'and',
-        'AND',
         'order',
-        'ORDER',
         'by',
-        'BY',
         'asc',
-        'ASC',
         'desc',
-        'DESC',
-        'limit',
-        'LIMIT'
+        'limit'
     );
 
     public function __construct(string $input)
@@ -131,7 +121,7 @@ class Lexer
 
     private function isKw($str)
     {
-        return in_array($str, $this->KeyWords);
+        return in_array(strtolower($str), $this->KeyWords);
     }
 
     private function isChar($c='')
