@@ -16,7 +16,8 @@ function pt($data)
     exit();
 }
 
-//pt($argv);
+//pt((int)'a');
+//pt(strtolower('>'));
 
 function testLexer($input, $expect) {
     $lexer = new Lexer($input);
@@ -164,39 +165,29 @@ $exp_lexer = [
 //echo json_encode($exp_lexer);
 //testLexer($json, $exp_lexer);
 //print "lexer test pass\n";
-
+//exit();
 
 
 $exp_parse = [
     'kind' => 'root', 'child' => [
         //select valid_etime,id
-        ['kind' => 'select', 'child' => [
+        ['kind' => 'select', 'attr' => 'select', 'child' => [
             ['kind' => 'var', 'child' => 'valid_etime'],
             ['kind' => 'var', 'child' => 'id'],
-//            ['kind' => '=', 'child' => '='],
-            ['kind' => 'exp', 'child' => [
-                'left' => 1,
-                'op' => '+',
-                'right' => [
-                    'left' => 2, 'op' => '*', 'right' => 3
-                ]
-            ]],
         ]],
 
         //from t
-        ['kind' => 'from', 'child' => ['kind' => 'var', 'child' => 't']],
+        ['kind' => 'from', 'attr' => 'from', 'child' => ['kind' => 'var', 'child' => 't']],
 
         //where
         //    id > 10
         //    or (price+2 = 100 or price-2 = 50)
         //    and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
-        ['kind' => 'where', 'child' => [
+        ['kind' => 'where', 'attr' => 'where', 'child' => [
             ['kind' => 'exp', 'child' => [
                 //id > 10
-                'left' => ['kind' => 'exp', 'child' => [
-                    'left' => ['kind' => 'var', 'child' => 'id'],
-                    'op' => '>',
-                    'right' => ['kind' => 'num', 'child' => '10']
+                'left' => [ 'kind' => 'fuhao', 'attr' => '-', 'child' => [
+                    ['kind' => 'num', 'child' => '10']
                 ]],
                 'op' => 'or',
                 //(price+2 = 100 or price-2 = 50) and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
@@ -275,12 +266,9 @@ $exp_parse = [
         ]],
 
         //order by id,price desc
-        ['kind' => 'order_by', 'child' => [
-            ['kind' => 'fields', 'child' => [
-                ['kind' => 'str', 'child' => 'id'],
-                ['kind' => 'str', 'child' => 'price']
-            ]],
-            ['kind' => 'type', 'child' => 'desc'],
+        ['kind' => 'order_by', 'attr' => 'desc', 'child' => [
+            ['kind' => 'var', 'child' => 'id'],
+            ['kind' => 'var', 'child' => 'price']
         ]],
 
         //limit 0,10
@@ -293,6 +281,6 @@ $exp_parse = [
 ];
 
 //echo json_encode($exp_parse);
-
+//exit();
 testParse($json, $exp_parse);
 print "parse test pass\n";

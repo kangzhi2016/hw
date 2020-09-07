@@ -44,27 +44,28 @@ class Parser
         if ($this->curTokenLiteral() == 'select')
         {
             $this->nextToken();
-            $this->parseAssign();
             return $this->parseSelect();
         }
-        elseif ($this->curTokenLiteral() == 'echo')
+        elseif ($this->curTokenLiteral() == 'from')
         {
             $this->nextToken();
-            return $this->parseEcho();
+            return $this->parseFrom();
         }
-        elseif ($this->curTokenLiteral() == 'func')
+        elseif ($this->curTokenLiteral() == 'where')
         {
             $this->nextToken();
-            return $this->parseFunc();
+            return $this->parseWhere();
         }
-        elseif ($this->curTokenTypeIs('var') && $this->nextTokenTypeIs('('))
-        {
-            return $this->parseCall();
-        }
-        elseif ($this->curTokenLiteral() == 'if')
+        elseif ($this->curTokenLiteral() == 'order' && $this->nextTokenLiteral() == 'by')
         {
             $this->nextToken();
-            return $this->parseIf();
+            $this->nextToken();
+            return $this->parseOrderBy();
+        }
+        elseif ($this->curTokenLiteral() == 'limit')
+        {
+            $this->nextToken();
+            return $this->parseLimit();
         }
     }
 
@@ -76,143 +77,68 @@ class Parser
         }
 
         $selectChild = array();
-
-        $varLiteral = $this->curTokenLiteral();
-        $this->varTable[$varLiteral] = '';
-        $selectChild[] = $this->makeAst('var', $varLiteral);
-
-        $this->nextToken();
-        $this->expectCurTokenType('=');
-        $selectChild[] = $this->makeAst('=', '=');
-
-        $selectChild[] = $this->parseGeneralExpr();
-        return $this->makeAst('assign', $selectChild);
+        $selectChild[] = $this->parseSelectFields();
+        return $this->makeAst('select', $selectChild);
     }
 
-    private function parseAssign()
+    private function parseSelectFields()
     {
-        if ( ! $this->curTokenTypeIs('var') )
+        $fieldsChild = array();
+
+        if ($this->curTokenTypeIs('*')){
+            $fieldsChild[] = $this->makeAst('*', '*');
+            $this->nextToken();
+            return $fieldsChild;
+        }
+
+        while ($this->curTokenTypeIs('var'))
+        {
+            $varLiteral = $this->curTokenLiteral();
+//            $this->varTable[$varLiteral] = '';
+            $fieldsChild[] = $this->makeAst('var', $varLiteral);
+            $this->nextToken();
+
+            if ($this->curTokenTypeIs(',')){
+                $this->nextToken();
+            }
+        }
+
+        return $fieldsChild;
+    }
+
+    private function parseFrom()
+    {
+        if (!$this->curTokenTypeIs('var'))
         {
             $this->throw_error_info(__FUNCTION__, 'var', json_encode($this->curToken));
         }
 
-        $assignChild = array();
-
+        $fromChild = array();
         $varLiteral = $this->curTokenLiteral();
-        $this->varTable[$varLiteral] = '';
-        $assignChild[] = $this->makeAst('var', $varLiteral);
-
+        $fromChild[] = $this->makeAst('var', $varLiteral);
         $this->nextToken();
-        $this->expectCurTokenType('=');
-        $assignChild[] = $this->makeAst('=', '=');
-
-        $assignChild[] = $this->parseGeneralExpr();
-        return $this->makeAst('assign', $assignChild);
+        return $this->makeAst('from', $fromChild);
     }
 
-    private function parseEcho()
+    private function parseWhere ()
     {
-        $echoChild = $this->parseGeneralExpr();
-        return $this->makeAst('echo', $echoChild);
+        if ( !$this->curTokenTypeIs('num') &&
+            !$this->curTokenTypeIs('str') &&
+            !$this->curTokenTypeIs('var') &&
+            !$this->curTokenTypeIs('(') )
+        {
+            $this->throw_error_info(__FUNCTION__, 'num|str|var|(', json_encode($this->curToken));
+        }
+
+        $whereChild = array();
+        $paraChild[] = $this->parseGeneralExpr();
+        return $this->makeAst('where', $whereChild);
     }
 
-    private function parseParas()
-    {
-        if ( ! $this->curTokenTypeIs('(') )
-        {
-            $this->throw_error_info(__FUNCTION__, '(', json_encode($this->curToken));
-        }
-
-        $paraChild = array();
-
-        $this->nextToken(); //(
-
-        while ( !$this->curTokenTypeIs(')') )
-        {
-            $paraChild[] = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
-            $this->nextToken();
-        }
-
-        $this->nextToken(); //)
-
-        return $paraChild;
-    }
-
-    private function parseStmt($needNext=false)
-    {
-        if ( ! $this->curTokenTypeIs('{') )
-        {
-            $this->throw_error_info(__FUNCTION__, '{', json_encode($this->curToken));
-        }
-
-        $stmtChild = array();
-
-        $this->nextToken(); //{
-
-        while ( !$this->curTokenTypeIs('}') )
-        {
-            $stmtChild[] = $this->parseKw();
-            $this->nextToken();
-        }
-
-        if ($needNext)
-        {
-            $this->nextToken(); //}
-        }
-
-        return $stmtChild;
-    }
-
-    private function parseIf($cond=array(), $stmt=array(), $condNum = 1)
-    {
-        $ifChild = array();
-
-        $cond['cond'.$condNum] = $this->parseIfCondition();
-//        $stmt['cond'.$condNum] = $this->parseStmt(true);
-        $paraStmt = $this->parseStmt(true);
-        $stmt['cond'.$condNum] = $this->makeAst('top', $paraStmt);
-//        $this->nextToken();
-
-        if ($this->curTokenLiteral() == 'else' || $this->curTokenLiteral() == 'elseif' || ($this->curTokenLiteral() == 'else' && $this->nextToken['literal'] == 'if') )
-        {
-            $this->nextToken();
-            return $this->parseIf($cond, $stmt, ++$condNum);
-        }
-
-        $ifChild['cond'] = $cond;
-        $ifChild['stmt'] = $stmt;
-        return $this->makeAst('if', $ifChild);
-    }
-
-    private function parseIfCondition()
-    {
-        $condChild = array();
-
-        if ($this->curTokenTypeIs('{'))
-        {
-            return $condChild;
-        }
-
-        if ( ! $this->curTokenTypeIs('(') )
-        {
-            $this->throw_error_info(__FUNCTION__, '(', json_encode($this->curToken));
-        }
-
-        p($this->curToken);
-        $this->nextToken(); //(
-        p($this->curToken);
-
-        while ( !$this->curTokenTypeIs(')') )
-        {
-//            p($this->curToken);
-            $condChild[] = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
-            $this->nextToken();
-        }
-
-        $this->nextToken(); //)
-//p($condChild);
-        return $condChild;
-    }
+//    private function parseWhereExp()
+//    {
+//
+//    }
 
     private function parseGeneralExpr()
     {
@@ -228,16 +154,26 @@ class Parser
         }
     }
 
-    public function parseExpr($precedence)
+    //a*b+c*d
+    private function parseExpr($precedence)
     {
+
+//        $left = []
+
         if ($this->curTokenTypeIs('num'))
         {
-            $left = (int)$this->curTokenLiteral();
+//            $left = (int)$this->curTokenLiteral();
+            $left = ['kind'=>'num', 'child'=> (int)$this->curTokenLiteral()];
+            $this->nextToken();
+        }
+        elseif ($this->curTokenTypeIs('str'))
+        {
+            $left = ['kind'=>'str', 'child'=> $this->curTokenLiteral()];
             $this->nextToken();
         }
         elseif ($this->curTokenTypeIs('var'))
         {
-            $left = $this->curTokenLiteral();
+            $left = ['kind'=>'var', 'child'=> $this->curTokenLiteral()];
             $this->nextToken();
         }
 
@@ -257,18 +193,61 @@ class Parser
     private function curPrecedence()
     {
         $precedences = [
-            '+' => 1,
-            '-' => 1,
-            '*' => 2,
-            '/' => 2
+            'or' => 1,
+            'and' => 2,
+            '>' => 3,
+            '=' => 3,
+            '<' => 3,
+            '+' => 4,
+            '-' => 4,
+            '*' => 5,
+            '/' => 5,
+            '(' => 5,
+            ')' => 5
         ];
 
         return $precedences[$this->curTokenType()] ?? 0;
     }
     private function IsOperator($tokenType)
     {
-        $operators = array('+', '-', '*', '/');
-        return in_array($tokenType, $operators);
+        $operators = array(
+            '+', '-', '*', '/',
+            '>', '=', '<',
+            'and', 'or'
+        );
+        return in_array(strtolower($tokenType), $operators);
+    }
+
+    private function parseOrderBy()
+    {
+        if (!$this->curTokenTypeIs('var'))
+        {
+            $this->throw_error_info(__FUNCTION__, 'var', json_encode($this->curToken));
+        }
+
+        $orderChild = array();
+//        $varLiteral = $this->curTokenLiteral();
+//        $orderChild[] = $this->makeAst('var', $varLiteral);
+
+        while ($this->curTokenTypeIs('var'))
+        {
+            $varLiteral = $this->curTokenLiteral();
+            $orderChild['fields'][] = $this->makeAst('var', $varLiteral);
+            $this->nextToken();
+
+            if ($this->curTokenTypeIs(',')){
+                $this->nextToken();
+            }
+        }
+
+        if ($this->curTokenLiteral() == 'desc' || $this->curTokenLiteral() == 'asc'){
+            $varLiteral = $this->curTokenLiteral();
+            $orderChild[] = $this->makeAst('type', $varLiteral);
+            $this->nextToken();
+        }
+
+//        $this->nextToken();
+        return $this->makeAst('order_by', $orderChild);
     }
 
     // 当前token的 类型
@@ -285,6 +264,11 @@ class Parser
     private function curTokenTypeIs($tokenType)
     {
         return $this->curToken['type'] == $tokenType;
+    }
+
+    private function nextTokenLiteral()
+    {
+        return strtolower($this->nextToken['literal']);
     }
 
     private function nextTokenTypeIs($tokenType)
@@ -328,19 +312,10 @@ class Parser
         return ['kind' => $kind, 'child' => $child];
     }
 
-    private function assignAstChild($child)
-    {
-        $this->ast['child'][] = $child;
-    }
-
-    private function throw_error($msg, $func='')
-    {
-//        throw new Exception($func.' '.$msg);
-        pt($func.' '.$msg);
-    }
     private function throw_error_info($curFunc, $exceptType, $curType)
     {
 //        throw new Exception($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
-        pt($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
+        var_dump($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
+        exit();
     }
 }
