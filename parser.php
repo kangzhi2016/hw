@@ -41,6 +41,7 @@ class Parser
 
     private function parseKw()
     {
+//        p($this->curTokenLiteral());
         if ($this->curTokenLiteral() == 'select')
         {
             $this->nextToken();
@@ -76,9 +77,7 @@ class Parser
             $this->throw_error_info(__FUNCTION__, 'var|*', json_encode($this->curToken));
         }
 
-        $selectChild = array();
-        $selectChild[] = $this->parseSelectFields();
-        return $this->makeAst('select', $selectChild);
+        return $this->makeAst('select', $this->parseSelectFields(), 'select');
     }
 
     private function parseSelectFields()
@@ -94,13 +93,13 @@ class Parser
         while ($this->curTokenTypeIs('var'))
         {
             $varLiteral = $this->curTokenLiteral();
-//            $this->varTable[$varLiteral] = '';
             $fieldsChild[] = $this->makeAst('var', $varLiteral);
-            $this->nextToken();
+//            $this->nextToken();
 
-            if ($this->curTokenTypeIs(',')){
+            if ($this->nextTokenTypeIs(',')){
                 $this->nextToken();
             }
+//            $this->nextToken();
         }
 
         return $fieldsChild;
@@ -114,10 +113,10 @@ class Parser
         }
 
         $fromChild = array();
-        $varLiteral = $this->curTokenLiteral();
-        $fromChild[] = $this->makeAst('var', $varLiteral);
+        pt($this->curTokenLiteral());
+        $fromChild[] = $this->makeAst('var', $this->curTokenLiteral());
         $this->nextToken();
-        return $this->makeAst('from', $fromChild);
+        return $this->makeAst('from', $fromChild, 'from');
     }
 
     private function parseWhere ()
@@ -130,9 +129,10 @@ class Parser
             $this->throw_error_info(__FUNCTION__, 'num|str|var|(', json_encode($this->curToken));
         }
 
-        $whereChild = array();
-        $paraChild[] = $this->parseGeneralExpr();
-        return $this->makeAst('where', $whereChild);
+        $whereChild = $this->makeAst('exp', []);
+        $whereChild = $this->parseExpr(0, $whereChild);
+//        $this->nextToken();
+        return $this->makeAst('where', $whereChild, 'where');
     }
 
 //    private function parseWhereExp()
@@ -140,29 +140,25 @@ class Parser
 //
 //    }
 
-    private function parseGeneralExpr()
-    {
-        if ($this->IsOperator($this->nextToken['type']))
-        {
-            return $this->makeAst('exp', $this->parseExpr(0));
-        }
-        else
-        {
-            $astArr = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
-//            $this->nextToken();
-            return $astArr;
-        }
-    }
+//    private function parseGeneralExpr()
+//    {
+//        if ($this->IsOperator($this->nextToken['type']))
+//        {
+//            return $this->makeAst('exp', $this->parseExpr(0));
+//        }
+//        else
+//        {
+//            $astArr = $this->makeAst($this->curTokenType(), $this->curTokenLiteral());
+////            $this->nextToken();
+//            return $astArr;
+//        }
+//    }
 
     //a*b+c*d
-    private function parseExpr($precedence)
+    private function parseExpr($precedence, &$expAst)
     {
-
-//        $left = []
-
         if ($this->curTokenTypeIs('num'))
         {
-//            $left = (int)$this->curTokenLiteral();
             $left = ['kind'=>'num', 'child'=> (int)$this->curTokenLiteral()];
             $this->nextToken();
         }
@@ -178,21 +174,26 @@ class Parser
         }
 
         while ( !$this->curTokenTypeIs('kw') && $precedence < $this->curPrecedence()) {
-            $left = $this->parseInfixExpr($left);
+            $left = $this->parseInfixExpr($left, $expAst);
         }
 //p($left);
         return $left;
     }
-    private function parseInfixExpr($left)
+    private function parseInfixExpr($left, &$expAst)
     {
         $op = $this->curTokenLiteral();
         $precedence = $this->curPrecedence();
         $this->nextToken();
-        return ['left' => $left, 'op' => $op, 'right' => $this->parseExpr($precedence)];
+        $expAst['attr'] = $op;
+        $expAst['child'][] = $left;
+        $expAst['child'][] = $this->parseExpr($precedence, $expAst);
+        return $expAst;
     }
     private function curPrecedence()
     {
         $precedences = [
+            '(' => 0,
+            ')' => 0,
             'or' => 1,
             'and' => 2,
             '>' => 3,
@@ -201,9 +202,7 @@ class Parser
             '+' => 4,
             '-' => 4,
             '*' => 5,
-            '/' => 5,
-            '(' => 5,
-            ')' => 5
+            '/' => 5
         ];
 
         return $precedences[$this->curTokenType()] ?? 0;
@@ -226,13 +225,11 @@ class Parser
         }
 
         $orderChild = array();
-//        $varLiteral = $this->curTokenLiteral();
-//        $orderChild[] = $this->makeAst('var', $varLiteral);
 
         while ($this->curTokenTypeIs('var'))
         {
             $varLiteral = $this->curTokenLiteral();
-            $orderChild['fields'][] = $this->makeAst('var', $varLiteral);
+            $orderChild[] = $this->makeAst('var', $varLiteral);
             $this->nextToken();
 
             if ($this->curTokenTypeIs(',')){
@@ -240,14 +237,31 @@ class Parser
             }
         }
 
-        if ($this->curTokenLiteral() == 'desc' || $this->curTokenLiteral() == 'asc'){
-            $varLiteral = $this->curTokenLiteral();
-            $orderChild[] = $this->makeAst('type', $varLiteral);
-            $this->nextToken();
+        $scType = ($this->curTokenLiteral() == 'desc')?'desc':'asc';
+        return $this->makeAst('order_by', $orderChild, $scType);
+    }
+
+    private function parseLimit()
+    {
+        if (!$this->curTokenTypeIs('num'))
+        {
+            $this->throw_error_info(__FUNCTION__, 'num', json_encode($this->curToken));
         }
 
-//        $this->nextToken();
-        return $this->makeAst('order_by', $orderChild);
+        $orderChild = array();
+        $orderChild[] = $this->makeAst('row', $this->curTokenLiteral());
+
+        if ($this->curTokenTypeIs(',')){
+            $this->nextToken();
+
+            if (!$this->nextTokenTypeIs('num')){
+                $this->throw_error_info(__FUNCTION__, 'num', json_encode($this->curToken));
+            }
+
+            $orderChild[] = $this->makeAst('offset', $this->curTokenLiteral());
+        }
+
+        return $this->makeAst('limit', $orderChild, 'limit');
     }
 
     // 当前token的 类型
@@ -307,14 +321,17 @@ class Parser
 //        p(json_encode($this->nextToken));
     }
 
-    private function makeAst($kind, $child)
+    private function makeAst($kind, $child, $attr='')
     {
-        return ['kind' => $kind, 'child' => $child];
+        if (!$attr){
+            return ['kind' => $kind, 'child' => $child];
+        }else{
+            return ['kind' => $kind, 'attr' => $attr, 'child' => $child];
+        }
     }
 
     private function throw_error_info($curFunc, $exceptType, $curType)
     {
-//        throw new Exception($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
         var_dump($curFunc.' error, expect type is '.$exceptType.', but give type is '.$curType);
         exit();
     }

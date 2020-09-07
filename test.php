@@ -184,80 +184,65 @@ $exp_parse = [
         //    or (price+2 = 100 or price-2 = 50)
         //    and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
         ['kind' => 'where', 'attr' => 'where', 'child' => [
-            ['kind' => 'exp', 'child' => [
+            ['kind' => 'exp', 'attr' => 'or', 'child' => [
                 //id > 10
-                'left' => [ 'kind' => 'fuhao', 'attr' => '-', 'child' => [
-                    ['kind' => 'num', 'child' => '10']
+                [ 'kind' => 'exp', 'attr' => '>', 'child' => [
+                    ['kind' => 'var', 'child' => 'id'],
+                    ['kind' => 'num', 'child' => '10'],
                 ]],
-                'op' => 'or',
                 //(price+2 = 100 or price-2 = 50) and (valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10)
-                'right' => ['kind' => 'exp', 'child' => [
+                ['kind' => 'exp', 'attr' => 'and', 'child' => [
                     //price+2 = 100 or price-2 = 50
-                    'left' => ['kind' => 'exp', 'child' => [
+                    ['kind' => 'exp', 'attr' => 'or', 'child' => [
                         //price+2 = 100
-                        'left' => ['kind' => 'exp', 'child' => [
-                            'left' => ['kind' => 'exp', 'child' => [
-                                'left' => ['kind' => 'var', 'child' => 'price'],
-                                'op' => '+',
-                                'right' => ['kind' => 'num', 'child' => '2']
+                        ['kind' => 'exp', 'attr' => '=', 'child' => [
+                            ['kind' => 'exp', 'attr' => '+', 'child' => [
+                                ['kind' => 'var', 'child' => 'price'],
+                                ['kind' => 'num', 'child' => '2']
                             ]],
-                            'op' => '=',
-                            'right' => ['kind' => 'num', 'child' => '10']
+                            ['kind' => 'num', 'child' => '100']
                         ]],
-                        'op' => 'or',
                         //price-2 = 50
-                        'right' => ['kind' => 'exp', 'child' => [
-                            'left' => ['kind' => 'exp', 'child' => [
-                                'left' => ['kind' => 'var', 'child' => 'price'],
-                                'op' => '-',
-                                'right' => ['kind' => 'num', 'child' => '2']
+                        ['kind' => 'exp', 'attr' => '=', 'child' => [
+                            ['kind' => 'exp', 'attr' => '-', 'child' => [
+                                ['kind' => 'var', 'child' => 'price'],
+                                ['kind' => 'num', 'child' => '2']
                             ]],
-                            'op' => '=',
-                            'right' => ['kind' => 'num', 'child' => '50']
+                            ['kind' => 'num', 'child' => '50']
                         ]]
                     ]],
-                    'op' => 'and',
                     //valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01" or id = 10 and price < 10
-                    'right' => ['kind' => 'exp', 'child' => [
+                    ['kind' => 'exp', 'attr' => 'or', 'child' => [
                         //valid_etime*3 < "2020-10-01" or valid_etime/2 > "2020-10-01"
-                        'left' => ['kind' => 'exp', 'child' => [
+                        ['kind' => 'exp', 'attr' => 'or', 'child' => [
                             //valid_etime*3 < "2020-10-01"
-                            'left' => ['kind' => 'exp', 'child' => [
+                            ['kind' => 'exp', 'attr' => '<', 'child' => [
                                 //valid_etime*3
-                                'left' => ['kind' => 'exp', 'child' => [
-                                    'left' => ['kind' => 'var', 'child' => 'valid_etime'],
-                                    'op' => '*',
-                                    'right' => ['kind' => 'num', 'child' => '3']
+                                ['kind' => 'exp', 'attr' => '*', 'child' => [
+                                    ['kind' => 'var', 'child' => 'valid_etime'],
+                                    ['kind' => 'num', 'child' => '3']
                                 ]],
-                                'op' => '<',
-                                'right' => ['kind' => 'str', 'child' => '2020-10-01']
+                                ['kind' => 'str', 'child' => '2020-10-01']
                             ]],
-                            'op' => 'or',
                             //valid_etime/2 > "2020-10-01"
-                            'right' => ['kind' => 'exp', 'child' => [
+                            ['kind' => 'exp', 'attr' => '>', 'child' => [
                                 //valid_etime/2
-                                'left' => ['kind' => 'exp', 'child' => [
-                                    'left' => ['kind' => 'var', 'child' => 'valid_etime'],
-                                    'op' => '/',
-                                    'right' => ['kind' => 'num', 'child' => '2']
+                                ['kind' => 'exp', 'attr' => '/', 'child' => [
+                                    ['kind' => 'var', 'child' => 'valid_etime'],
+                                    ['kind' => 'num', 'child' => '2']
                                 ]],
-                                'op' => '>',
-                                'right' => ['kind' => 'str', 'child' => '2020-10-01']
+                                ['kind' => 'str', 'child' => '2020-10-01']
                             ]]
                         ]],
-                        'op' => 'or',
                         //id = 10 and price < 10
-                        'right' => ['kind' => 'exp', 'child' => [
-                            'left' => ['kind' => 'exp', 'child' => [
-                                'left' => ['kind' => 'var', 'child' => 'id'],
-                                'op' => '=',
-                                'right' => ['kind' => 'num', 'child' => '10']
+                        ['kind' => 'exp', 'attr' => 'and', 'child' => [
+                            ['kind' => 'exp', 'attr' => '=', 'child' => [
+                                ['kind' => 'var', 'child' => 'id'],
+                                ['kind' => 'num', 'child' => '10']
                             ]],
-                            'op' => 'and',
-                            'right' => ['kind' => 'exp', 'child' => [
-                                'left' => ['kind' => 'var', 'child' => 'price'],
-                                'op' => '>',
-                                'right' => ['kind' => 'num', 'child' => '10']
+                            ['kind' => 'exp', 'attr' => '>', 'child' => [
+                                ['kind' => 'var', 'child' => 'price'],
+                                ['kind' => 'num', 'child' => '10']
                             ]]
                         ]]
                     ]]
@@ -272,7 +257,7 @@ $exp_parse = [
         ]],
 
         //limit 0,10
-        ['kind' => 'limit', 'child' => [
+        ['kind' => 'limit', 'attr' => 'limit', 'child' => [
             ['kind' => 'row', 'child' => '0'],
             ['kind' => 'offset', 'child' => '10'],
         ]],
@@ -281,6 +266,5 @@ $exp_parse = [
 ];
 
 //echo json_encode($exp_parse);
-//exit();
 testParse($json, $exp_parse);
 print "parse test pass\n";
