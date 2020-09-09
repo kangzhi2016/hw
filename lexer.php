@@ -35,9 +35,10 @@ class Lexer
 
         if ($this->isSymbol())
         {
-            $symbol = $this->matchSymbol();
-            $token = $this->makeToken($symbol, $symbol);
-//            $this->readChar();
+//            $symbol = $this->matchSymbol();
+//            $token = $this->makeToken($symbol, $symbol);
+            $token = $this->makeToken($this->char, $this->char);
+            $this->readChar();
             return $token;
         }
         elseif ($this->isNumber())
@@ -49,7 +50,7 @@ class Lexer
         {
             $str = $this->matchVarName();
             if ($this->isKw($str)) {
-                return $this->makeToken('kw', $str);
+                return $this->makeToken($str, $str);
             } else {
                 return $this->makeToken('var', $str);
             }
