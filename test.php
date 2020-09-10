@@ -61,7 +61,8 @@ function testParse($input, $expect)
         echo "expect token is:";
         echo json_encode($expect);
         echo "\n";
-        echo "</pre>givens token is:";
+        echo "<br>";
+        echo "givens token is:";
         echo json_encode($tokens);
         exit();
     }
@@ -299,14 +300,117 @@ $exp_parse = [
         ]],
 
         //limit 0,10
-//        ['kind' => 'limit', 'attr' => 'limit', 'child' => [
-//            ['kind' => 'row', 'child' => 0],
-//            ['kind' => 'offset', 'child' => 10],
-//        ]],
+        ['kind' => 'limit', 'attr' => 'limit', 'child' => [
+            ['kind' => 'num', 'child' => 0],
+            ['kind' => 'num', 'child' => 10],
+        ]],
 
     ]
 ];
 
 //echo json_encode($exp_parse);
-testParse($json, $exp_parse);
-print "parse test pass\n";
+//testParse($json, $exp_parse);
+//print "parse test pass\n";
+
+
+function testAst($input)
+{
+    $lexer = new Lexer($input);
+    $parse = new Parser($lexer);
+
+    try{
+        $ast = $parse->parse();
+    }catch (Exception $e) {
+        p($e->getMessage());
+    }
+
+//    echo json_encode($ast);
+
+    if (!isset($ast['kind']) || $ast['kind'] != 'root' || !isset($ast['child']) || !$ast['child']){
+        pt('ast 结构错误, root 或 child 不存在');
+    }
+
+    $sql = getSelect($ast['child']);
+    $sql .= getFrom($ast['child']);
+    $sql .= getWhere($ast['child']);
+    $sql .= getOrderBy($ast['child']);
+    $sql .= getLimit($ast['child']);
+
+    p($sql);
+}
+function getSelect($astChild)
+{
+    if (!$astChild[0] || $astChild[0]['kind'] != 'select'){
+        pt('select 错误');
+    }
+    $selectAst = $astChild[0];
+    $fields = '';
+    foreach ($selectAst['child'] as $field){
+        $fields .= $field['child'].',';
+    }
+
+    return 'select '.rtrim($fields,',');
+}
+function getFrom($astChild)
+{
+    if (!$astChild[1] || $astChild[1]['kind'] != 'from'){
+        pt('from 错误');
+    }
+
+    $fromAst = $astChild[1];
+    return ' from '.$fromAst['child']['child'];
+}
+function getWhere($astChild)
+{
+    if (!isset($astChild[2]) || empty($astChild[2]) || !isset($astChild[2]['child']) || empty($astChild[2]['child'])){
+        return '';
+    }elseif ($astChild[2]['kind'] != 'where'){
+        pt('where 错误');
+    }
+
+    $whereAst = $astChild[2]['child'];
+    return ' where '.getExp($whereAst);
+}
+function getExp($expAst)
+{
+    if ($expAst['kind'] == 'var' || $expAst['kind'] == 'str' || $expAst['kind'] == 'num'){
+        return $expAst['child'];
+    }elseif ($expAst['kind'] == 'exp'){
+        while ($expAst['kind'] == 'exp'){
+            $left = getExp($expAst['child'][0]);
+            $right = getExp($expAst['child'][1]);
+            $op = $expAst['attr'];
+            return '( '.$left.$op.$right.' )';
+        }
+    }else{
+        pt('where 错误');
+    }
+}
+function getOrderBy($astChild)
+{
+    if (!isset($astChild[3]) || empty($astChild[3]) || !isset($astChild[3]['child']) || empty($astChild[3]['child'])){
+        return '';
+    }elseif ($astChild[3]['kind'] != 'order_by'){
+        pt('order_by 错误');
+    }
+
+    $orderByAst = $astChild[3]['child'];
+    $orderStr = '';
+    foreach ($orderByAst as $order){
+        $orderStr .= $order['child']['child'].' '.$order['attr'].',';
+    }
+    return ' order by '.rtrim($orderStr,',');
+}
+function getLimit($astChild)
+{
+    if (!isset($astChild[4]) || empty($astChild[4]) || !isset($astChild[4]['child']) || empty($astChild[4]['child'])){
+        return '';
+    }elseif ($astChild[4]['kind'] != 'limit'){
+        pt('limit 错误');
+    }
+
+    $limitByAst = $astChild[4]['child'];
+    return ' order by '.$limitByAst[0]['child'].', '.$limitByAst[1]['child'];
+}
+
+testAst($json);
